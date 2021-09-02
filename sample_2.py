@@ -6,6 +6,7 @@ import gym_custom
 import gym
 import matplotlib.pyplot as plt
 import os
+
 script_dir = os.path.dirname(__file__)
 results_dir = os.path.join(script_dir, 'Results/')
 res_dist_dict = {}
@@ -21,7 +22,6 @@ for i in range(GLOBAL_CFG['Max_No_of_Jobs']):
         (GLOBAL_CFG['Max_No_of_Task'])))
     subset_task_duration[i] = generate_duration(subset_dataset, key=i)
 
-
 env = gym.make('custom-v0',
                train_data=subset_dataset,
                task_duration=subset_task_duration,
@@ -34,7 +34,6 @@ for episode in range(1):
         state = env.reset()
         done = False
         current_epi_reward = 0
-
         while not done:
             total_steps += 1
             #action = np.random.choice(GYM_ENV_CFG['NB_NODES'] +1)
