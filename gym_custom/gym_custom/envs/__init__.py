@@ -1,1 +1,1 @@
-from gym_custom.envs.custom_env_1 import EMDCEnv
+from gym_custom.envs.custom_env_1 import  customEnv
