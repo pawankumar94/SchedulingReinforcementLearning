@@ -123,6 +123,7 @@ class customEnv(gym.Env):
         if self.no_more_steps():
             self.done = True
             self.reward = self.episode_end_reward()
+            self.episode_no += 1
 
         return self.state, self.reward, self.done, {}
 
