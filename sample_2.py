@@ -1,4 +1,6 @@
 from matplotlib.pyplot import step
+
+import Dqn_Model
 from config import *
 from data_preprocess import *
 import random
@@ -7,6 +9,7 @@ import gym
 import matplotlib.pyplot as plt
 import os
 import time
+from Dqn_Model import *
 
 script_dir = os.path.dirname(__file__)
 results_dir = os.path.join(script_dir, 'Results/')
@@ -29,6 +32,10 @@ env = gym.make('custom-v0',
                state_idx=state_indices,
                attr_idx=attr_idx
               )
+
+model = Dqn_Model.DQN(1450, 9, env)
+print(model.parameters)
+'''
 total_steps= 0
 replay_mem = []
 for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
@@ -49,4 +56,4 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
                 print("episodeReward", reward)
                 print('\n', "***********")
                 print(np.shape(state))
-                time.sleep(2)
+                time.sleep(2) '''

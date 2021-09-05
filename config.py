@@ -44,17 +44,16 @@ DRL_CFG = {
     'DATASET_TRAIN_LEN': 1000,
     'TRAIN_EPISODES': 5, #number of episodes to train for
     'TOTAL_FRAMES_PER_EPI': 1000, # We need to code so that it doesn't iterate over the whole dataset, but TFPE
-    'EPS_START': 1,
-    'EPS_FINAL': 0.01,
-    'EPS_DECAY': 1000,
+    'epsilon_start': 1.0,
+    'epsilon_final': 0.01,
+    'epsilon_decay': 500,
     'BETA_START': 0.4,
     'GAMMA': 0.99,
     'LR': 1e-3,
-    'NUM_H': 5,
     'TARGET_UPD_INT': 1000,
-    'MODEL_ARCH': 'ddqn',
+    'MODEL_ARCH': 'dqn',
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES']
 }
-# DRL_CFG['TOTAL_FRAMES_PER_EPI'] = DRL_CFG['DATASET_TRAIN_LEN']
-DRL_CFG['MAX_STEPS'] = DRL_CFG['TOTAL_FRAMES_PER_EPI'] * DRL_CFG['TRAIN_EPISODES']
+
+
