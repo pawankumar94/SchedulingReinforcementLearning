@@ -74,13 +74,15 @@ class customEnv(gym.Env):
                 for item in self.machine_status[machine]:
                     machine_cpu_usg = item['cpu']
                     machine_mem_usg = item['mem']
-                    self.state[:, self.nb_dim * 2 + (machine - 1)] += machine_cpu_usg  # Cpu Usage Col
-                    self.state[:, self.nb_dim * 2 + (machine + self.nb_w_nodes - 1)] += machine_mem_usg  # mem usage Col
+                    length_of_current_task = len(self.all_episodes_duration[self.episode_no])
+                    self.state[:length_of_current_task, self.nb_dim * 2 + (machine - 1)] += machine_cpu_usg  # Cpu Usage Col
+                    self.state[:length_of_current_task, self.nb_dim * 2 + (machine + self.nb_w_nodes - 1)] += machine_mem_usg  # mem usage Col
             self.state[self.i][0] = 1  # Assigns to Task Placed as one
         else:
             machine_no, cpu_usage, mem_usage = list(self.memory[task].values())
-            self.state[:, self.nb_dim * 2 + (machine_no - 1)] -= cpu_usage
-            self.state[:, self.nb_dim * 2 + (machine_no - 1) + self.nb_w_nodes] -= mem_usage
+            length_of_current_task = len(self.all_episodes_duration[self.episode_no])
+            self.state[:length_of_current_task, self.nb_dim * 2 + (machine_no - 1)] -= cpu_usage
+            self.state[:length_of_current_task, self.nb_dim * 2 + (machine_no - 1) + self.nb_w_nodes] -= mem_usage
             self.state[task][0] = 0  # Placed Removed
             self.state[task][-1] = 1.0  # Done Incremented
 
