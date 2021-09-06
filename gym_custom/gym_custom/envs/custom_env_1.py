@@ -7,10 +7,10 @@ import gym
 import numpy as np
 from config import *
 from gym import spaces
-
 np.random.seed(GYM_ENV_CFG['SEED'])
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
+
     def __init__(self,
                  train_data,
                  task_duration,
@@ -34,6 +34,8 @@ class customEnv(gym.Env):
         self.machine_status = {}
         self.nb_w_nodes = GYM_ENV_CFG['NB_NODES']
         self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']
+        # The cols we need to include in state: TaskDone, TaskReq_time, Request,
+        # Usages+Onehot+done : 2+2+2+
         self.cols_state = self.nb_dim * 2 + self.nb_w_nodes * 2 + self.nb_w_nodes + 1
         self.state = np.zeros(0)
         self.actions = self.nb_w_nodes + 1  # 1 adding wait in actions
@@ -95,7 +97,7 @@ class customEnv(gym.Env):
             task_with_min_time = min(self.task_end_time, key=self.task_end_time.get)
             min_end_time = self.task_end_time[task_with_min_time]
             self.clock_time = min_end_time
-            self.update_one_hot_encoding(action= action,task_index=task_with_min_time, remove=True)
+            self.update_one_hot_encoding(action=action, task_index=task_with_min_time, remove=True)
             self.update_state(wait_flag=True, task=task_with_min_time)
             self.task_end_time.pop(task_with_min_time)
             self.reward = 0
@@ -116,7 +118,7 @@ class customEnv(gym.Env):
             self.update_state()
             self.update_machine_state_rem_time()
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
-            usage = list(self.state[self.i,self.nb_dim*2:(self.nb_dim*2+self.nb_w_nodes)+self.nb_w_nodes])
+            usage = list(self.state[self.i, self.nb_dim*2:(self.nb_dim*2+self.nb_w_nodes)+self.nb_w_nodes])
             self.reward = self.get_intermediate_reward(action=action, usages=usage)
             self.i += 1  # increment only when we place task
 
@@ -133,8 +135,9 @@ class customEnv(gym.Env):
         for machine in machine_list:
             random_cpu = random.uniform(0, 0.3)
             random_mem = random.uniform(0, 0.2)
-            self.state[:, self.nb_dim * 2 + machine] = random_cpu
-            self.state[:, self.nb_dim * 2 + self.nb_w_nodes + machine] = random_mem
+            length_of_current_task = len(self.all_episodes_duration[self.episode_no])
+            self.state[:length_of_current_task, self.nb_dim * 2 + machine] = random_cpu
+            self.state[:length_of_current_task , self.nb_dim * 2 + self.nb_w_nodes + machine] = random_mem
 
     def update_one_hot_encoding(self, action, task_index=None, remove=False):
         action = action - 1
@@ -155,7 +158,8 @@ class customEnv(gym.Env):
         self.state = np.zeros((self.max_no_task, self.cols_state))
         # Initialize CPU req and Mem Req
         for i, j in enumerate(self.train_data[self.episode_no]):
-            self.state[i, self.nb_dim:self.nb_dim * 2] = j[self.nb_dim:self.nb_dim * 2]  # (Task placed, task_time, cpu_req, mem_req, 16usages, 8 oneHot, Done
+            self.state[i, self.nb_dim:self.nb_dim * 2] = \
+                j[self.nb_dim:self.nb_dim * 2]  # (Task placed, task_time, cpu_req, mem_req, 16usages, 8 oneHot, Done
         # Since action 0 is wait Increment Machines with 1
         for idx in range(self.nb_w_nodes):
             self.machine_status[idx + 1] = []
