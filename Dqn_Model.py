@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from collections import deque
 from config import *
-
+np.random.seed(GYM_ENV_CFG['SEED'])
 
 class ReplayBuffer:
     def __init__(self, capacity):

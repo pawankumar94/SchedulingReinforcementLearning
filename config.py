@@ -24,7 +24,7 @@ GYM_ENV_CFG = {
 # memory available per machine type
 GLOBAL_CFG = {
     'Max_No_of_Task': 50,
-    'Max_No_of_Jobs': 10,
+    'Max_No_of_Jobs': 1000,
     'TASK_DURS_LOW': [50, 100],
     'TASK_DURS_MEDIUM': [50, 100, 200, 500],
     'TASK_DURS_HIGH': [200, 500, 1000],
@@ -41,9 +41,6 @@ GLOBAL_CFG = {
 
 DRL_CFG = {
     'BATCH_SIZE': 64,
-    'DATASET_TRAIN_LEN': 1000,
-    'TRAIN_EPISODES': 5, #number of episodes to train for
-    'TOTAL_FRAMES_PER_EPI': 1000, # We need to code so that it doesn't iterate over the whole dataset, but TFPE
     'epsilon_start': 1.0,
     'epsilon_final': 0.01,
     'epsilon_decay': 500,
