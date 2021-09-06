@@ -69,6 +69,10 @@ class customEnv(gym.Env):
             self.machine_status[key] = run_task_temp
 
     def update_state(self, wait_flag=False, task=None):
+        if task != None \
+                and  task > len(self.all_episodes_duration[self.episode_no]):
+            return
+
         if not wait_flag:
             for machine in self.machine_status:
                 for item in self.machine_status[machine]:
@@ -152,6 +156,7 @@ class customEnv(gym.Env):
         self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
 
     def reset(self):
+        self.task_end_time = {}
         self.i = 0
         self.done = False
         for i in self.train_data.keys():
@@ -170,6 +175,7 @@ class customEnv(gym.Env):
         norm_duration = [epi_durs[i] / max(epi_durs) for i in range(len(epi_durs))]
         current_task_len = len(norm_duration)
         self.state[:current_task_len, 1] = norm_duration
+
         self.random_initialize_machine()
         return self.state
 
