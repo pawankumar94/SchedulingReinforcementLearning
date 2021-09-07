@@ -93,6 +93,7 @@ class customEnv(gym.Env):
             self.state[task][-1] = 1.0  # Done Incremented
 
     def step(self, action):
+        action = int(action)
         cpu_usage, mem_usage = self.get_task_usages()
         time_left_for_task = self.all_episodes_duration[self.episode_no][self.i]
         # Rule1
@@ -135,7 +136,7 @@ class customEnv(gym.Env):
             self.reward = self.episode_end_reward()
             self.episode_no += 1
 
-        return np.expand_dims(self.state,0), self.reward, self.done, {}
+        return copy.deepcopy(np.expand_dims(self.state,0)), self.reward, self.done, {}
 
     def random_initialize_machine(self):
         self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
@@ -179,7 +180,7 @@ class customEnv(gym.Env):
         self.state[:current_task_len, 1] = norm_duration
 
         self.random_initialize_machine()
-        return np.expand_dims(self.state,0)
+        return copy.deepcopy(np.expand_dims(self.state,0))
 
     def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]
