@@ -136,7 +136,7 @@ class customEnv(gym.Env):
             self.reward = self.episode_end_reward()
             self.episode_no += 1
 
-        return copy.deepcopy(np.expand_dims(self.state,0)), self.reward, self.done, {}
+        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, {}
 
     def random_initialize_machine(self):
         self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
