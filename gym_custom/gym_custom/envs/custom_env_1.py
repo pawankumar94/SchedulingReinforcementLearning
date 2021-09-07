@@ -48,7 +48,8 @@ class customEnv(gym.Env):
         self.action_space = spaces.Discrete(self.nb_w_nodes + 1)
         self.observation_space = spaces.Box(low=0,
                                             high=1,
-                                            shape=(self.max_no_task, self.cols_state))
+                                            shape=(1, self.max_no_task, self.cols_state),
+                                            dtype = np.float32)
         self.reset()
 
     def get_task_usages(self):
@@ -133,7 +134,7 @@ class customEnv(gym.Env):
             self.reward = self.episode_end_reward()
             self.episode_no += 1
 
-        return self.state, self.reward, self.done, {}
+        return np.expand_dims(self.state,0), self.reward, self.done, {}
 
     def random_initialize_machine(self):
         self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
@@ -177,7 +178,7 @@ class customEnv(gym.Env):
         self.state[:current_task_len, 1] = norm_duration
 
         self.random_initialize_machine()
-        return self.state
+        return np.expand_dims(self.state,0)
 
     def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]
