@@ -49,7 +49,8 @@ class customEnv(gym.Env):
         self.observation_space = spaces.Box(low=0,
                                             high=1,
                                             shape=(1, self.max_no_task, self.cols_state),
-                                            dtype = np.float32)
+                                             dtype = np.float64)
+
         self.reset()
 
     def get_task_usages(self):
