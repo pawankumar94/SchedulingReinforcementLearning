@@ -10,13 +10,13 @@ from gym import spaces
 np.random.seed(GYM_ENV_CFG['SEED'])
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
-
     def __init__(self,
                  train_data,
                  task_duration,
                  state_idx,
                  attr_idx,
-                 start_idx=0):
+                 start_idx=0,
+                 random_initialize = False):
         super(customEnv, self).__init__()
         self.train_data = train_data
         self.all_episodes_duration = task_duration
@@ -31,6 +31,7 @@ class customEnv(gym.Env):
         self.task_end_time = {}
         self.memory = {}
         self.i = 0
+        self.random_initialize = random_initialize
         self.machine_status = {}
         self.nb_w_nodes = GYM_ENV_CFG['NB_NODES']
         self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']
@@ -138,15 +139,16 @@ class customEnv(gym.Env):
 
         return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, {}
 
-    def random_initialize_machine(self):
-        self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
-        machine_list = list(np.where(self.machine_mask == True)[0])
-        for machine in machine_list:
-            random_cpu = random.uniform(0, 0.3)
-            random_mem = random.uniform(0, 0.2)
-            length_of_current_task = len(self.all_episodes_duration[self.episode_no])
-            self.state[:length_of_current_task, self.nb_dim * 2 + machine] = random_cpu
-            self.state[:length_of_current_task , self.nb_dim * 2 + self.nb_w_nodes + machine] = random_mem
+    def random_initialize_machine(self,random_initialize):
+        if random_initialize:
+            self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
+            machine_list = list(np.where(self.machine_mask == True)[0])
+            for machine in machine_list:
+                random_cpu = random.uniform(0, 0.3)
+                random_mem = random.uniform(0, 0.2)
+                length_of_current_task = len(self.all_episodes_duration[self.episode_no])
+                self.state[:length_of_current_task, self.nb_dim * 2 + machine] = random_cpu
+                self.state[:length_of_current_task , self.nb_dim * 2 + self.nb_w_nodes + machine] = random_mem
 
     def update_one_hot_encoding(self, action, task_index=None, remove=False):
         action = action - 1
@@ -178,8 +180,7 @@ class customEnv(gym.Env):
         norm_duration = [epi_durs[i] / max(epi_durs) for i in range(len(epi_durs))]
         current_task_len = len(norm_duration)
         self.state[:current_task_len, 1] = norm_duration
-
-        self.random_initialize_machine()
+        self.random_initialize_machine(random_initialize=self.random_initialize)
         return copy.deepcopy(np.expand_dims(self.state,0))
 
     def get_intermediate_reward(self, action, usages):
