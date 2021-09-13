@@ -23,7 +23,8 @@ train_data = train_data.tolist()
 for i in range(GLOBAL_CFG['Max_No_of_Jobs']):
     subset_dataset[i] = np.asarray(random.sample(train_data,\
                                                  random.randint(1, GLOBAL_CFG['Max_No_of_Task'])))
-    subset_task_duration[i] = generate_duration(subset_dataset, key=i)
+    subset_task_duration[i] = generate_duration(subset_dataset, key=i,\
+                                                length_duration=GLOBAL_CFG['TASK_DURS_MEDIUM'])
 
 env = gym.make('custom-v0',
                train_data=subset_dataset,

@@ -38,22 +38,14 @@ def data_gen(sample_size, res_dist_dict, ratio=1):
     return df_sample
 
 
-# Need to Pass the single col_list(e.g df['cpu_req']) as input and col name (e.g. 'cpu_req')
-def gen_visualization(df_list, col_name):
-    x = pd.DataFrame(df_list)
-    col = col_name
-    conditions = [x[col] > 2 / 3, (x[col] >= 1 / 3) & (x[col] <= 2 / 3), x[col] < 1 / 3]
-    choices = ["high", 'medium', 'low']
-    x["load_class"] = np.select(conditions, choices)
-
 def preprocess_data(df, len_data):
     task_data = df
     attr_idx, state_indices = gen_states(dataset=task_data, features_to_include=['cpu_req', 'mem_req'])
     data_subset = task_data.to_numpy()[:len_data, :]  # Length of Training Data
     return data_subset, attr_idx, state_indices
 
-def generate_duration(data_subset, key):
-    task_durs = GLOBAL_CFG['TASK_DURS_MEDIUM']
+def generate_duration(data_subset, key, length_duration):
+    task_durs = length_duration
     subset_task_durs = np.random.choice(task_durs, len(data_subset[key]))
     return subset_task_durs
 
