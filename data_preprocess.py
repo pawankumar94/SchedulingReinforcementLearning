@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from config import *
 import matplotlib.pyplot as plt
+import seaborn as sns
+
 np.random.seed(GYM_ENV_CFG['SEED'])
 def data_gen(sample_size, res_dist_dict, ratio=1):
     # give the probability of selecting [low, medium, high]
@@ -57,3 +59,26 @@ def gen_states(dataset, features_to_include):
     for elm in features_to_include:
         state_indices.append(attr_idx[elm])
     return attr_idx, state_indices
+
+def generate_visualizations(synthetic_df, sample_dict):
+    plt.subplots(figsize=(20, 20))
+    count = 1
+    for idx,type in enumerate(GLOBAL_CFG['features_to_include']):
+        plt.subplot(3,2,count)
+        plt.title(sample_dict[type])
+        sample_list = synthetic_df[type]
+        sample_df = pd.DataFrame(sample_list)
+        conditions = [sample_df[type] > 0.599,
+                          (sample_df[type] >= 0.299) & (sample_df[type] <= 0.599),
+                          sample_df[type] < 0.299]
+        choices = ["high","medium","low"]
+        sample_df["load_class"] = np.select(conditions, choices)
+        sns.set(rc={'figure.figsize':(15,5.27)})
+        sns.histplot(data = sample_df
+                ,x = type,
+                alpha = 1
+                ,bins = 50,
+                hue = 'load_class'
+                )
+        count+=1
+    plt.show()
