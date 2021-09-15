@@ -32,8 +32,8 @@ env = gym.make('custom-v0',
 
 
 def gen_plot(state, timestep, path_to_dir):
-    cpu_usgages = state[0][4:4 + 8]
-    mem_usages = state[0][4 + 8:4 + 8 * 2]
+    cpu_usgages = state[0][0][4:4 + 8]
+    mem_usages = state[0][0][4 + 8:4 + 8 * 2]
     fig = plt.figure(figsize=(10, 5))
     n = GYM_ENV_CFG['NB_NODES']
     r = np.arange(n)

@@ -41,14 +41,17 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
         current_epi_reward = 0
         while not done:
             total_steps += 1
-            pos = {0: 4, 8: 4, 6: 3}
-            action = random.choice([x for x in pos for y in range(pos[x])])
+            #pos = {0: 4, 8: 4, 6: 3}
+            #action = random.choice([x for x in pos for y in range(pos[x])])
+            action = np.random.choice(9)
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
             next_state, reward, done, _ = env.step(action)
             print("reward:", reward)
+           # gen_plot(state=state)
             replay_mem.append([state, next_state, reward, done])
             state = next_state
+
             if done:
                 print("episodeReward", reward)
                 print('\n', "***********")

@@ -82,3 +82,25 @@ def generate_visualizations(synthetic_df, sample_dict):
                 )
         count+=1
     plt.show()
+
+def gen_plot(state, timestep=None, path_to_dir=None):
+    cpu_usgages = state[0][0][4:4 + 8]
+    mem_usages = state[0][0][4 + 8:4 + 8 * 2]
+    fig = plt.figure(figsize=(10, 5))
+    n = GYM_ENV_CFG['NB_NODES']
+    r = np.arange(n)
+    width = 0.25
+    plt.bar(r, cpu_usgages, color='g',
+            width=width, edgecolor='black',
+            label='Cpu_usage')
+    plt.bar(r + width, mem_usages, color='r',
+            width=width, edgecolor='black',
+            label='Memory Usage')
+
+    plt.xlabel("No Of Machine")
+    plt.ylabel("Usage Per Machine")
+    plt.title("TimeStep" + str(timestep))
+    # plt.grid(linestyle='--')
+    plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
+    plt.legend()
+    plt.show()

@@ -18,6 +18,7 @@ class customEnv(gym.Env):
                  start_idx=0,
                  random_initialize = False):
         super(customEnv, self).__init__()
+        self.environment_time = 0
         self.train_data = train_data
         self.all_episodes_duration = task_duration
         self.state_idx = state_idx
@@ -110,7 +111,7 @@ class customEnv(gym.Env):
             self.update_one_hot_encoding(action=action, task_index=task_with_min_time, remove=True)
             self.update_state(wait_flag=True, task=task_with_min_time)
             self.task_end_time.pop(task_with_min_time)
-            self.reward = 0
+            self.reward = 0.5
         else:
             self.update_one_hot_encoding(action)
             self.memory[self.i] = {"Machine_No": action,
@@ -137,7 +138,7 @@ class customEnv(gym.Env):
             self.reward = self.episode_end_reward()
             self.episode_no += 1
 
-        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, {}
+        return copy.deepcopy(np.expand_dims(self.state,-1)), float(self.reward), self.done, {}
 
     def random_initialize_machine(self,random_initialize):
         if random_initialize:
@@ -181,7 +182,7 @@ class customEnv(gym.Env):
         current_task_len = len(norm_duration)
         self.state[:current_task_len, 1] = norm_duration
         self.random_initialize_machine(random_initialize=self.random_initialize)
-        return copy.deepcopy(np.expand_dims(self.state,0))
+        return copy.deepcopy(np.expand_dims(self.state,-1))
 
     def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]
@@ -213,3 +214,40 @@ class customEnv(gym.Env):
         machine_mem_type = GYM_ENV_CFG['MM_CAP'][machine]
         machine_mem_cap = GLOBAL_CFG['MM_CAP_VALUES'][machine_mem_type]
         return machine_cpu_cap, machine_mem_cap
+
+    def gen_plot(self,timestep=None, path_to_dir=None):
+        state = self.state
+        timestep = self.i
+        cpu_usgages = state[0][0][4:4 + 8]
+        mem_usages = state[0][0][4 + 8:4 + 8 * 2]
+        fig = plt.figure(figsize=(10, 5))
+        n = GYM_ENV_CFG['NB_NODES']
+        r = np.arange(n)
+        width = 0.25
+        plt.bar(r, cpu_usgages, color='g',
+                width=width, edgecolor='black',
+                label='Cpu_usage')
+        plt.bar(r + width, mem_usages, color='r',
+                width=width, edgecolor='black',
+                label='Memory Usage')
+
+        plt.xlabel("No Of Machine")
+        plt.ylabel("Usage Per Machine")
+        plt.title("TimeStep" + str(timestep))
+        # plt.grid(linestyle='--')
+        plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
+        plt.legend()
+        plt.show()
+   #     name = str(timestep) + ".jpeg"
+   #     print(name)
+   #     fig.savefig(os.path.join(path_to_dir, name), bbox_inches='tight', dpi=150)
+
+    def make_gif(self,path):
+        png_dir = path
+        images = []
+        for file_name in sorted(os.listdir(png_dir)):
+            if file_name.endswith('.jpeg'):
+                file_path = os.path.join(png_dir, file_name)
+                images.append(imageio.imread(file_path))
+        gif_name = "movie.gif"
+        imageio.mimsave(os.path.join(path, gif_name), images)
