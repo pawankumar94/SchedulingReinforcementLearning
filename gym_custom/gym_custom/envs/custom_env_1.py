@@ -202,7 +202,10 @@ class customEnv(gym.Env):
         return reward
 
     def episode_end_reward(self):
-        reward = 100 * (self.clock_time / max(self.task_end_time.values()))
+        if not all(self.task_end_time.values()):
+            reward = -10
+        else:
+            reward = 100 * (self.clock_time / max(self.task_end_time.values()))
         return reward
 
     # First Termination condition
