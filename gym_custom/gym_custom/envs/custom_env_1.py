@@ -52,7 +52,7 @@ class customEnv(gym.Env):
                                             high=1,
                                             shape=(1, self.max_no_task, self.cols_state),
                                              dtype = np.float64)
-
+        self.j = 0
         self.reset()
 
     def get_task_usages(self):
@@ -95,6 +95,7 @@ class customEnv(gym.Env):
             self.state[task][-1] = 1.0  # Done Incremented
 
     def step(self, action):
+        self.j+= 1
         action = int(action)
         cpu_usage, mem_usage = self.get_task_usages()
         time_left_for_task = self.all_episodes_duration[self.episode_no][self.i]
@@ -133,7 +134,7 @@ class customEnv(gym.Env):
             self.reward = self.get_intermediate_reward(action=action, usages=usage)
             self.i += 1  # increment only when we place task
 
-        if self.no_more_steps():
+        if self.no_more_steps() or self.j>200:
             self.done = True
             self.reward = self.episode_end_reward()
             self.episode_no += 1
@@ -164,6 +165,7 @@ class customEnv(gym.Env):
     def reset(self):
         self.task_end_time = {}
         self.i = 0
+        self.j = 0
         self.done = False
         for i in self.train_data.keys():
             self.max_number_of_tasks_per_job.append(len(self.train_data[i]))
