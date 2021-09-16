@@ -138,7 +138,7 @@ class customEnv(gym.Env):
             self.reward = self.episode_end_reward()
             self.episode_no += 1
 
-        return copy.deepcopy(np.expand_dims(self.state,-1)), float(self.reward), self.done, {}
+        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, {}
 
     def random_initialize_machine(self,random_initialize):
         if random_initialize:
@@ -182,7 +182,7 @@ class customEnv(gym.Env):
         current_task_len = len(norm_duration)
         self.state[:current_task_len, 1] = norm_duration
         self.random_initialize_machine(random_initialize=self.random_initialize)
-        return copy.deepcopy(np.expand_dims(self.state,-1))
+        return copy.deepcopy(np.expand_dims(self.state,0))
 
     def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]

@@ -51,7 +51,6 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
            # gen_plot(state=state)
             replay_mem.append([state, next_state, reward, done])
             state = next_state
-
             if done:
                 print("episodeReward", reward)
                 print('\n', "***********")
