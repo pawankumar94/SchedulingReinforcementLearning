@@ -1,12 +1,15 @@
-# The reward would be taken from the task with last step in the task end time
-# Include the one Hot encoding for the task
-# Include the Task Time for the task
+# Todo Modify the return episode reward such \
+#  that if 2 task has the same minimum time they get finsihsed together
+# Todo Include the percentage of machines used in this episode \
+#  percentage of Task completed per episode in the info parameter
+# Todo Include the Number of Tasks not completed in the episode#
 import copy
 import random
 import gym
 import numpy as np
 from config import *
 from gym import spaces
+import matplotlib.pyplot as plt
 np.random.seed(GYM_ENV_CFG['SEED'])
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
@@ -19,40 +22,43 @@ class customEnv(gym.Env):
                  random_initialize = False):
         super(customEnv, self).__init__()
         self.environment_time = 0
-        self.train_data = train_data
+        self.train_data = train_data  # loading the dataset
         self.all_episodes_duration = task_duration
         self.state_idx = state_idx
-        self.attr_idx = attr_idx
+        self.attr_idx = attr_idx  # cpu:0 and memory:1
         self.start_idx = start_idx
         self.wait_action = 0
         self.episode_no = 0
         self.reward = 0
         self.done = False
         self.clock_time = 0
-        self.task_end_time = {}
+        self.task_end_time = {}  # "Task_No":Time_for_Task captures the no of running task
         self.memory = {}
-        self.i = 0
-        self.random_initialize = random_initialize
+        self.i = 0  # steps excluding waiting action
+        self.j = 0  # steps including wait task
+        self.random_initialize = random_initialize  # Flag to determine if some machines should\
+        # be initialized with some value in beginning
         self.machine_status = {}
-        self.nb_w_nodes = GYM_ENV_CFG['NB_NODES']
-        self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']
+        self.nb_w_nodes = GYM_ENV_CFG['NB_NODES']  # 8
+        self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']  # 2
         # The cols we need to include in state: TaskDone, TaskReq_time, Request,
         # Usages+Onehot+done : 2+2+2+
-        self.cols_state = self.nb_dim * 2 + self.nb_w_nodes * 2 + self.nb_w_nodes + 1
+        self.cols_state = self.nb_dim * 2 + self.nb_w_nodes * 2 + (self.nb_w_nodes) + 1  # 29
         self.state = np.zeros(0)
-        self.actions = self.nb_w_nodes + 1  # 1 adding wait in actions
+        self.actions = self.nb_w_nodes + 1   # wait action is supposed to be 0 no.
         self.max_number_of_tasks_per_job = []
         self.max_steps_current_epi = 0
         self.machine_mask = []
+
         for i in self.train_data.keys():
             self.max_number_of_tasks_per_job.append(len(self.train_data[i]))
+        self.machine_capacity = {}
         self.max_no_task = max(self.max_number_of_tasks_per_job)
-        self.action_space = spaces.Discrete(self.nb_w_nodes + 1)
+        self.action_space = spaces.Discrete(self.nb_w_nodes + 1)  #
         self.observation_space = spaces.Box(low=0,
                                             high=1,
                                             shape=(1, self.max_no_task, self.cols_state),
                                              dtype = np.float64)
-        self.j = 0
         self.reset()
 
     def get_task_usages(self):
@@ -73,48 +79,72 @@ class customEnv(gym.Env):
             self.machine_status[key] = run_task_temp
 
     def update_state(self, wait_flag=False, task=None):
-        if task != None \
+
+        '''if task != None \
                 and  task > len(self.all_episodes_duration[self.episode_no]):
-            return
+            return'''
 
         if not wait_flag:
             for machine in self.machine_status:
                 for item in self.machine_status[machine]:
                     machine_cpu_usg = item['cpu']
                     machine_mem_usg = item['mem']
-                    length_of_current_task = len(self.all_episodes_duration[self.episode_no])
-                    self.state[:length_of_current_task, self.nb_dim * 2 + (machine - 1)] += machine_cpu_usg  # Cpu Usage Col
-                    self.state[:length_of_current_task, self.nb_dim * 2 + (machine + self.nb_w_nodes - 1)] += machine_mem_usg  # mem usage Col
+                    length_of_current_episode = len(self.all_episodes_duration[self.episode_no])
+                    self.state[:length_of_current_episode, self.nb_dim * 2 + (machine)] += machine_cpu_usg  # Cpu Usage Col
+                    self.state[:length_of_current_episode, self.nb_dim * 2 + (machine + self.nb_w_nodes)] += machine_mem_usg  # mem usage Col
             self.state[self.i][0] = 1  # Assigns to Task Placed as one
+
         else:
-            machine_no, cpu_usage, mem_usage = list(self.memory[task].values())
-            length_of_current_task = len(self.all_episodes_duration[self.episode_no])
-            self.state[:length_of_current_task, self.nb_dim * 2 + (machine_no - 1)] -= cpu_usage
-            self.state[:length_of_current_task, self.nb_dim * 2 + (machine_no - 1) + self.nb_w_nodes] -= mem_usage
-            self.state[task][0] = 0  # Placed Removed
-            self.state[task][-1] = 1.0  # Done Incremented
+
+            for key in task:
+                machine_no, cpu_usage, mem_usage = list(self.memory[key].values())
+                length_of_current_episode = len(self.all_episodes_duration[self.episode_no])
+                self.state[:length_of_current_episode, self.nb_dim * 2 + (machine_no)] -= cpu_usage
+                self.state[:length_of_current_episode, self.nb_dim * 2 + (machine_no) + self.nb_w_nodes] -= mem_usage
+                self.state[key][0] = 0  # Placed Removed
+                self.state[key][-1] = 1.0  # Done Incremented
 
     def step(self, action):
-        self.j+= 1
+
+        self.j+= 1  # total number of steps taken inluding waiting
         action = int(action)
-        cpu_usage, mem_usage = self.get_task_usages()
-        time_left_for_task = self.all_episodes_duration[self.episode_no][self.i]
-        # Rule1
+        cpu_usage, mem_usage = self.get_task_usages()  # usages of current task
+        time_left_for_task = self.all_episodes_duration[self.episode_no][self.i]  # duration of \
+        # current task
+        info = {}
+
+        # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
             state = copy.deepcopy(self.state)
             self.state = state
             self.reward = 0
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Percentage"] = percentage_used_machine
 
         elif action == self.wait_action:
-            task_with_min_time = min(self.task_end_time, key=self.task_end_time.get)
-            min_end_time = self.task_end_time[task_with_min_time]
-            self.clock_time = min_end_time
-            self.update_one_hot_encoding(action=action, task_index=task_with_min_time, remove=True)
-            self.update_state(wait_flag=True, task=task_with_min_time)
-            self.task_end_time.pop(task_with_min_time)
+            min_end_time = min(self.task_end_time.values())
+            tasks_with_minimum_time = [k for k, v in self.task_end_time.items() if v==min_end_time]
+            #task_with_min_time = min(self.task_end_time, key=self.task_end_time.get)
+            #min_end_time = self.task_end_time[task_with_min_time]
+
+            for i in (tasks_with_minimum_time):
+                machine_no, cpu_usage, mem_usage = list(self.memory[i].values())
+                usages = [cpu_usage, mem_usage]
+                self.change_in_machine_capacity(action=machine_no, usages=usages)
+
+            self.clock_time = min_end_time  # we change the current clock to min. of task running
+            self.update_one_hot_encoding(task_index=tasks_with_minimum_time, remove=True)
+            self.update_state(wait_flag=True, task=tasks_with_minimum_time)
+            #self.task_end_time.pop(task_with_min_time)
+            [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
             self.reward = 0.5
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Percentage"] = percentage_used_machine
+
+
         else:
-            self.update_one_hot_encoding(action)
+            action -= 1
+            self.update_one_hot_encoding(action = action)
             self.memory[self.i] = {"Machine_No": action,
                                    "cpu_usage": cpu_usage,
                                    "mem_usage": mem_usage,
@@ -129,17 +159,57 @@ class customEnv(gym.Env):
             })
             self.update_state()
             self.update_machine_state_rem_time()
+            usages = [cpu_usage, mem_usage]
+            self.change_in_machine_capacity(action = action, usages=usages, placed= True)
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
             usage = list(self.state[self.i, self.nb_dim*2:(self.nb_dim*2+self.nb_w_nodes)+self.nb_w_nodes])
+            #percent_used_machines = self.calculate_percent_machine(usage)
             self.reward = self.get_intermediate_reward(action=action, usages=usage)
             self.i += 1  # increment only when we place task
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Percentage"] = percentage_used_machine
 
-        if self.no_more_steps() or self.j>200:
+
+        if self.no_more_steps() or self.termination_conditon_waiting():
             self.done = True
             self.reward = self.episode_end_reward()
+            percentage_used_machine = self.calculate_percent_machine()
+            info["Final_Machines_Percentage_usage"] = percentage_used_machine
+            percent_of_task_completed, total_no_of_tasks\
+                , total_steps_including_waiting, total_steps_excluding_wait \
+                = self.calculate_task_completed_epi()
+            info["Percentage_Task_Completed"] = percent_of_task_completed
+            info["Total_Task_Episode"] = total_no_of_tasks
+            info["Steps_Including_Wait"] = total_steps_including_waiting
+            info["Steps_Without_Wait"] = total_steps_excluding_wait
+            info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
             self.episode_no += 1
+            #info["Percentage_Task_Completed"] = self.calculate_task_completed_epi()
 
-        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, {}
+        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
+
+    def termination_conditon_waiting(self):
+        maximum_waiting_current_epi = len(self.train_data[self.episode_no]) * 2
+        return self.j >= maximum_waiting_current_epi
+
+    def calculate_task_completed_epi(self):
+        total_task_current_epi = len(self.train_data[self.episode_no])-1
+        percent_of_task_completed = (self.i / total_task_current_epi)*100
+        total_steps_including_waiting = self.j
+        total_steps_excluding_wait = self.i
+
+        output_info = [percent_of_task_completed, total_task_current_epi, total_steps_including_waiting, total_steps_excluding_wait]
+        return output_info
+
+    def calculate_percent_machine(self):
+        percentage_per_machine = {}
+        for machine in range(self.nb_w_nodes):
+            cpu_limit, memory_limit = self.machine_limits(machine)
+            changed_cpu_limit, changed_mem_limit = self.machine_capacity[machine]
+            percentage_cpu = ((cpu_limit - changed_cpu_limit) / cpu_limit) * 100
+            percetage_mem = ((memory_limit- changed_mem_limit) / memory_limit) * 100
+            percentage_per_machine[machine] = [percentage_cpu, percetage_mem]
+        return percentage_per_machine
 
     def random_initialize_machine(self,random_initialize):
         if random_initialize:
@@ -152,38 +222,66 @@ class customEnv(gym.Env):
                 self.state[:length_of_current_task, self.nb_dim * 2 + machine] = random_cpu
                 self.state[:length_of_current_task , self.nb_dim * 2 + self.nb_w_nodes + machine] = random_mem
 
-    def update_one_hot_encoding(self, action, task_index=None, remove=False):
-        action = action - 1
+    def change_in_machine_capacity(self, action, usages, placed=False):
+        if placed:
+            capacity = self.machine_capacity[action]
+           # diff = capacity - usages
+            diff = [x - y for x, y in zip(capacity, usages)]
+            self.machine_capacity[action] = diff
+        else:
+            capacity = self.machine_capacity[action]
+            add = [x + y for x, y in zip(capacity, usages)]
+            self.machine_capacity[action] = add
+        return
+
+    def update_one_hot_encoding(self, action= None, task_index=None, remove=False):
         if remove:
-            state_one_hot = self.state[task_index, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
-            state_one_hot[action] = 0.0
+            for task in task_index:
+               action = self.memory[task]['Machine_No']  # we extract the machine no on which the\
+               state_one_hot = self.state[task, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
+               state_one_hot[action] = 0.0  # we remove the task from machine in state
+               self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
+
+            '''for key in task_index:
+                state_one_hot = self.state[key, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
+                state_one_hot[action] = 0.0'''
+
         else:
             state_one_hot = self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
             state_one_hot[action] = 1.0
-        self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
+            self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
 
     def reset(self):
         self.task_end_time = {}
-        self.i = 0
-        self.j = 0
+        self.i = 0  # steps taken considering tasks
+        self.j = 0  # steps including wait action
         self.done = False
+
         for i in self.train_data.keys():
-            self.max_number_of_tasks_per_job.append(len(self.train_data[i]))
-        self.max_no_task = max(self.max_number_of_tasks_per_job)
-        self.state = np.zeros((self.max_no_task, self.cols_state))
+            self.max_number_of_tasks_per_job.append(len(self.train_data[i]))  # this list \
+            # contains the length of each episode
+
+        for machine in range(self.nb_w_nodes):
+            self.machine_capacity[machine] = self.machine_limits(machine)
+
+        self.max_no_task = max(self.max_number_of_tasks_per_job)  # maximum overall episodes
+        self.state = np.zeros((self.max_no_task, self.cols_state))  # initialization of state
+
         # Initialize CPU req and Mem Req
         for i, j in enumerate(self.train_data[self.episode_no]):
             self.state[i, self.nb_dim:self.nb_dim * 2] = \
                 j[self.nb_dim:self.nb_dim * 2]  # (Task placed, task_time, cpu_req, mem_req, 16usages, 8 oneHot, Done
-        # Since action 0 is wait Increment Machines with 1
+
         for idx in range(self.nb_w_nodes):
-            self.machine_status[idx + 1] = []
+            self.machine_status[idx] = []  # used in machine_update()
+
         # Assign Task request Time Normalised
-        epi_durs = self.all_episodes_duration[self.episode_no]
-        norm_duration = [epi_durs[i] / max(epi_durs) for i in range(len(epi_durs))]
-        current_task_len = len(norm_duration)
+        epi_durs = self.all_episodes_duration[self.episode_no]  # durations for all tasks
+        norm_duration = [epi_durs[i] / max(epi_durs) for i in range(len(epi_durs))]  # normalised \
+        current_task_len = len(norm_duration)  # length of current episode
         self.state[:current_task_len, 1] = norm_duration
         self.random_initialize_machine(random_initialize=self.random_initialize)
+
         return copy.deepcopy(np.expand_dims(self.state,0))
 
     def get_intermediate_reward(self, action, usages):
@@ -218,13 +316,13 @@ class customEnv(gym.Env):
         machine_cpu_cap = GLOBAL_CFG['MC_CAP_VALUES'][machine_cpu_type]
         machine_mem_type = GYM_ENV_CFG['MM_CAP'][machine]
         machine_mem_cap = GLOBAL_CFG['MM_CAP_VALUES'][machine_mem_type]
-        return machine_cpu_cap, machine_mem_cap
+        return [machine_cpu_cap, machine_mem_cap]
 
-    def gen_plot(self,timestep=None, path_to_dir=None):
+    def gen_plot(self, timestep=None, path_to_dir=None):
         state = self.state
         timestep = self.i
-        cpu_usgages = state[0][0][4:4 + 8]
-        mem_usages = state[0][0][4 + 8:4 + 8 * 2]
+        cpu_usgages = state[0][4:4 + 8]
+        mem_usages = state[0][4 + 8:4 + 8 * 2]
         fig = plt.figure(figsize=(10, 5))
         n = GYM_ENV_CFG['NB_NODES']
         r = np.arange(n)

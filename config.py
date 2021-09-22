@@ -14,7 +14,7 @@ GYM_ENV_CFG = {
 # memory available per machine type
 GLOBAL_CFG = {
     'Max_No_of_Task': 100,
-    'Max_No_of_Jobs': 1000,
+    'Max_No_of_Jobs': 10,
     'TASK_DURS_LOW': [50, 100],
     'TASK_DURS_MEDIUM': [50, 100, 200, 500],
     'TASK_DURS_HIGH': [200, 500, 1000],
