@@ -2,7 +2,8 @@
 #  that if 2 task has the same minimum time they get finsihsed together
 # Todo Include the percentage of machines used in this episode \
 #  percentage of Task completed per episode in the info parameter
-# Todo Include the Number of Tasks not completed in the episode#
+# Todo Include the Number of Tasks not completed in the episode
+# Todo need to check for penalty reward
 import copy
 import random
 import gym
@@ -105,7 +106,7 @@ class customEnv(gym.Env):
                 self.state[key][-1] = 1.0  # Done Incremented
 
     def step(self, action):
-
+        action_capacity = self.machine_capacity[action]
         self.j+= 1  # total number of steps taken inluding waiting
         action = int(action)
         cpu_usage, mem_usage = self.get_task_usages()  # usages of current task
@@ -168,9 +169,11 @@ class customEnv(gym.Env):
             self.i += 1  # increment only when we place task
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
+            self.gen_plot()
 
 
         if self.no_more_steps() or self.termination_conditon_waiting():
+            info = {}
             self.done = True
             self.reward = self.episode_end_reward()
             percentage_used_machine = self.calculate_percent_machine()
@@ -286,15 +289,18 @@ class customEnv(gym.Env):
 
     def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]
-        usage_2d = np.insert(usage_2d, 0, 0.0)  # we insert the wait action here
+     #   usage_2d = np.insert(usage_2d, 0, 0.0)  # we insert the wait action here
         least_used_machines = list(np.where(usage_2d == min(usage_2d))[0])
-        machine_cpu_cap, machine_mem_cap = self.machine_limits(action)
-        total_cap = machine_cpu_cap + machine_mem_cap
+       # machine_cpu_cap, machine_mem_cap = self.machine_limits(action)
+        updated_cpu_cap, updated_memory_cap = self.machine_capacity[action]
+        #total_cap = machine_cpu_cap + machine_mem_cap
         reward = 0
         if action in least_used_machines:
             reward = -10
-        elif usage_2d[action] > total_cap:
-            reward = -5
+        #elif usage_2d[action] > total_cap:
+        #    reward = -5
+        elif (updated_cpu_cap<=0) or (updated_memory_cap<=0):
+            reward = -20
         else:
             reward = 1
         return reward
@@ -321,13 +327,19 @@ class customEnv(gym.Env):
     def gen_plot(self, timestep=None, path_to_dir=None):
         state = self.state
         timestep = self.i
-        cpu_usgages = state[0][4:4 + 8]
-        mem_usages = state[0][4 + 8:4 + 8 * 2]
+        percentage_used_machine = self.calculate_percent_machine()
+        cpu_usages = []
+        mem_usages = []
+        for key in percentage_used_machine:
+            cpu_usages.append(percentage_used_machine[key][0])
+            mem_usages.append(percentage_used_machine[key][1])
+       # cpu_usgages = state[0][4:4 + 8]
+        #mem_usages = state[0][4 + 8:4 + 8 * 2]
         fig = plt.figure(figsize=(10, 5))
         n = GYM_ENV_CFG['NB_NODES']
         r = np.arange(n)
         width = 0.25
-        plt.bar(r, cpu_usgages, color='g',
+        plt.bar(r, cpu_usages, color='g',
                 width=width, edgecolor='black',
                 label='Cpu_usage')
         plt.bar(r + width, mem_usages, color='r',
@@ -338,7 +350,8 @@ class customEnv(gym.Env):
         plt.ylabel("Usage Per Machine")
         plt.title("TimeStep" + str(timestep))
         # plt.grid(linestyle='--')
-        plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
+        plt.xticks(r + width / 2, ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7'])
+        plt.ylim(0, 100)
         plt.legend()
         plt.show()
    #     name = str(timestep) + ".jpeg"

@@ -44,7 +44,7 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             action = np.random.choice(GYM_ENV_CFG['NB_NODES'])
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
-            env.gen_plot()
+            #env.gen_plot()
             next_state, reward, done, info = env.step(action)
             print("Information:", info)
             print("reward:", reward)
