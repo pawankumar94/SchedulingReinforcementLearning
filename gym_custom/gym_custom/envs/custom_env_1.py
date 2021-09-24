@@ -106,7 +106,7 @@ class customEnv(gym.Env):
                 self.state[key][-1] = 1.0  # Done Incremented
 
     def step(self, action):
-        action_capacity = self.machine_capacity[action]
+        #action_capacity = self.machine_capacity[action]
         self.j+= 1  # total number of steps taken inluding waiting
         action = int(action)
         cpu_usage, mem_usage = self.get_task_usages()  # usages of current task
@@ -170,7 +170,6 @@ class customEnv(gym.Env):
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
             self.gen_plot()
-
 
         if self.no_more_steps() or self.termination_conditon_waiting():
             info = {}
