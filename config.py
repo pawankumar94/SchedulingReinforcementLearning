@@ -1,11 +1,13 @@
 GYM_ENV_CFG = {
+
+    # Machine Configuration: {5,8,10,20}
     'NB_NODES': 8,
     'SEED': 42,
     'cpu_req': 'uniform',
-    'mem_req': 'medium',
+    'mem_req': 'uniform',
     'TASK_LOAD': 'MEDIUM',
-    'MC_CAP': 'BBACCBBBA',
-    'MM_CAP': 'CCBBBBACA',
+    'MC_CAP': 'BBBBBBBA',
+    'MM_CAP': 'BBBBBBBA',
     'NB_RES_DIM': 2,
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
@@ -18,8 +20,8 @@ GLOBAL_CFG = {
     'TASK_DURS_LOW': [50, 100],
     'TASK_DURS_MEDIUM': [50, 100, 200, 500],
     'TASK_DURS_HIGH': [200, 500, 1000],
-    'MC_CAP_VALUES': {'A':0.25, 'B':0.5,'C':1.0},
-    'MM_CAP_VALUES': {'A':0.25,'B':0.5,'C':0.75},
+    'MC_CAP_VALUES': {'A':1.0, 'B':0.50},
+    'MM_CAP_VALUES': {'A': 0.75, 'B': 0.38},
     'SEED': 42,
     'features_to_include': ['cpu_req', 'mem_req'],
     'DATA_LOCATION': 'input_1'

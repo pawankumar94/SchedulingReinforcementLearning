@@ -41,7 +41,7 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             total_steps += 1
             #pos = {0: 4, 8: 4, 6: 3}
             #action = random.choice([x for x in pos for y in range(pos[x])])
-            action = np.random.choice(GYM_ENV_CFG['NB_NODES'])
+            action = np.random.choice(GYM_ENV_CFG['NB_NODES']+1)
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
             #env.gen_plot()

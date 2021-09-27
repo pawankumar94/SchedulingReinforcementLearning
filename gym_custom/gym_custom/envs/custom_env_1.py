@@ -1,9 +1,5 @@
-# Todo Modify the return episode reward such \
-#  that if 2 task has the same minimum time they get finsihsed together
-# Todo Include the percentage of machines used in this episode \
-#  percentage of Task completed per episode in the info parameter
-# Todo Include the Number of Tasks not completed in the episode
-# Todo need to check for penalty reward
+# Todo Include the Penalty Term for teh Reward Calculation
+# Todo Include wait Action also in the output of the Neural Network
 import copy
 import random
 import gym
@@ -69,7 +65,8 @@ class customEnv(gym.Env):
         real_mem_usg = self.train_data[self.episode_no][self.i][mem_usg_col]
         return real_cpu_usg, real_mem_usg
 
-    def update_machine_state_rem_time(self):
+    # Not Important Function
+    '''def update_machine_state_rem_time(self):
         for key in self.machine_status:
             running_task = self.machine_status[key]
             run_task_temp = []
@@ -78,7 +75,7 @@ class customEnv(gym.Env):
                 if t_dict['rem_time'] > 0:
                     run_task_temp.append(t_dict)
             self.machine_status[key] = run_task_temp
-
+'''
     def update_state(self, wait_flag=False, task=None):
 
         '''if task != None \
@@ -159,7 +156,7 @@ class customEnv(gym.Env):
                 "mem_req": self.train_data[self.episode_no][self.i][self.attr_idx['mem_req']]
             })
             self.update_state()
-            self.update_machine_state_rem_time()
+ #           self.update_machine_state_rem_time()
             usages = [cpu_usage, mem_usage]
             self.change_in_machine_capacity(action = action, usages=usages, placed= True)
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
@@ -350,7 +347,7 @@ class customEnv(gym.Env):
         plt.ylabel("Usage Per Machine")
         plt.title("TimeStep" + str(timestep))
         # plt.grid(linestyle='--')
-        plt.xticks(r + width / 2, ['M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7'])
+        plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
         plt.ylim(0, 100)
         plt.legend()
         plt.show()
