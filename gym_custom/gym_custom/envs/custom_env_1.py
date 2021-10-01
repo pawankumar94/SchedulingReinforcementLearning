@@ -116,8 +116,8 @@ class customEnv(gym.Env):
             state = copy.deepcopy(self.state)
             self.state = state
             self.reward = 0
-            percentage_used_machine = self.calculate_percent_machine()
-            info["machine-Used-Percentage"] = percentage_used_machine
+            #percentage_used_machine = self.calculate_percent_machine()
+            #info["machine-Used-Percentage"] = percentage_used_machine
 
         elif action == self.wait_action:
             min_end_time = min(self.task_end_time.values())
@@ -136,9 +136,8 @@ class customEnv(gym.Env):
             #self.task_end_time.pop(task_with_min_time)
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
             self.reward = 0.5
-            percentage_used_machine = self.calculate_percent_machine()
-            info["machine-Used-Percentage"] = percentage_used_machine
-
+          #  percentage_used_machine = self.calculate_percent_machine()
+          #  info["machine-Used-Percentage"] = percentage_used_machine
 
         else:
             action -= 1
@@ -155,6 +154,7 @@ class customEnv(gym.Env):
                 "cpu_req": self.train_data[self.episode_no][self.i][self.attr_idx['cpu_req']],
                 "mem_req": self.train_data[self.episode_no][self.i][self.attr_idx['mem_req']]
             })
+
             self.update_state()
  #           self.update_machine_state_rem_time()
             usages = [cpu_usage, mem_usage]
@@ -172,7 +172,7 @@ class customEnv(gym.Env):
             info = {}
             self.done = True
             self.reward = self.episode_end_reward()
-            percentage_used_machine = self.calculate_percent_machine()
+            ''''percentage_used_machine = self.calculate_percent_machine()
             info["Final_Machines_Percentage_usage"] = percentage_used_machine
             percent_of_task_completed, total_no_of_tasks\
                 , total_steps_including_waiting, total_steps_excluding_wait \
@@ -181,11 +181,30 @@ class customEnv(gym.Env):
             info["Total_Task_Episode"] = total_no_of_tasks
             info["Steps_Including_Wait"] = total_steps_including_waiting
             info["Steps_Without_Wait"] = total_steps_excluding_wait
-            info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
+            info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wai'''
             self.episode_no += 1
             #info["Percentage_Task_Completed"] = self.calculate_task_completed_epi()
 
-        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
+        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done
+
+    def get_metric(self):
+        info = {}
+        if self.no_more_steps() or self.termination_conditon_waiting():
+            info["Final_Machines_Percentage_usage"] = percentage_used_machine
+            percent_of_task_completed, total_no_of_tasks \
+                , total_steps_including_waiting, total_steps_excluding_wait \
+                = self.calculate_task_completed_epi()
+            info["Percentage_Task_Completed"] = percent_of_task_completed
+            info["Total_Task_Episode"] = total_no_of_tasks
+            info["Steps_Including_Wait"] = total_steps_including_waiting
+            info["Steps_Without_Wait"] = total_steps_excluding_wait
+            info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
+
+        else:
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Percentage"] = percentage_used_machine
+        return info
+
 
     def termination_conditon_waiting(self):
         maximum_waiting_current_epi = len(self.train_data[self.episode_no]) * 2
@@ -196,7 +215,6 @@ class customEnv(gym.Env):
         percent_of_task_completed = (self.i / total_task_current_epi)*100
         total_steps_including_waiting = self.j
         total_steps_excluding_wait = self.i
-
         output_info = [percent_of_task_completed, total_task_current_epi, total_steps_including_waiting, total_steps_excluding_wait]
         return output_info
 

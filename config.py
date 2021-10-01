@@ -28,17 +28,20 @@ GLOBAL_CFG = {
 }
 
 DRL_CFG = {
-    'BATCH_SIZE': 64,
+    'BATCH_SIZE': 32,
     'epsilon_start': 1.0,
-    'epsilon_final': 0.01,
-    'epsilon_decay': 500,
+    'min_mem_size': 35,
+    'epsilon_final': 0.001,
+    'replay_size': 1_000,
+    'epsilon_decay': 0.9975,
     'BETA_START': 0.4,
     'GAMMA': 0.99,
     'LR': 1e-3,
-    'TARGET_UPD_INT': 1000,
+    'TARGET_UPD_INT': 500,
     'MODEL_ARCH': 'dqn',
     'BUFFER_TYPE': 'PER',
-    'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES']
+    'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
+    'Update_target_every': 5
 }
 
 
