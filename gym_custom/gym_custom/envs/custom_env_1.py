@@ -156,7 +156,7 @@ class customEnv(gym.Env):
             })
 
             self.update_state()
- #           self.update_machine_state_rem_time()
+   #           self.update_machine_state_rem_time()
             usages = [cpu_usage, mem_usage]
             self.change_in_machine_capacity(action = action, usages=usages, placed= True)
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
@@ -166,10 +166,9 @@ class customEnv(gym.Env):
             self.i += 1  # increment only when we place task
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
-            self.gen_plot()
+           # self.gen_plot()
 
         if self.no_more_steps() or self.termination_conditon_waiting():
-            info = {}
             self.done = True
             self.reward = self.episode_end_reward()
             ''''percentage_used_machine = self.calculate_percent_machine()
@@ -189,6 +188,7 @@ class customEnv(gym.Env):
 
     def get_metric(self):
         info = {}
+        # Log the reward
         if self.no_more_steps() or self.termination_conditon_waiting():
             percentage_used_machine = self.calculate_percent_machine()
             info["Final_Machines_Percentage_usage"] = percentage_used_machine
@@ -200,10 +200,11 @@ class customEnv(gym.Env):
             info["Steps_Including_Wait"] = total_steps_including_waiting
             info["Steps_Without_Wait"] = total_steps_excluding_wait
             info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
-
+            info["Episode_End_Reward"] = self.reward
         else:
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
+            info["Step-Reward"] = self.reward
         return info
 
 
