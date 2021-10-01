@@ -190,6 +190,7 @@ class customEnv(gym.Env):
     def get_metric(self):
         info = {}
         if self.no_more_steps() or self.termination_conditon_waiting():
+            percentage_used_machine = self.calculate_percent_machine()
             info["Final_Machines_Percentage_usage"] = percentage_used_machine
             percent_of_task_completed, total_no_of_tasks \
                 , total_steps_including_waiting, total_steps_excluding_wait \
