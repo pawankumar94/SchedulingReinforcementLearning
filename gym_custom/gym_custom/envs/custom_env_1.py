@@ -184,8 +184,8 @@ class customEnv(gym.Env):
             info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wai'''
             self.episode_no += 1
             #info["Percentage_Task_Completed"] = self.calculate_task_completed_epi()
-
-        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done
+        info = self.get_metric()
+        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
 
     def get_metric(self):
         info = {}
