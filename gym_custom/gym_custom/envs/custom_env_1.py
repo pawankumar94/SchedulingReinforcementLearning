@@ -46,7 +46,7 @@ class customEnv(gym.Env):
         self.max_number_of_tasks_per_job = []
         self.max_steps_current_epi = 0
         self.machine_mask = []
-
+        self.cum_reward = 0
         for i in self.train_data.keys():
             self.max_number_of_tasks_per_job.append(len(self.train_data[i]))
         self.machine_capacity = {}
@@ -116,6 +116,7 @@ class customEnv(gym.Env):
             state = copy.deepcopy(self.state)
             self.state = state
             self.reward = 0
+            self.cum_reward += self.reward
             #percentage_used_machine = self.calculate_percent_machine()
             #info["machine-Used-Percentage"] = percentage_used_machine
 
@@ -136,6 +137,7 @@ class customEnv(gym.Env):
             #self.task_end_time.pop(task_with_min_time)
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
             self.reward = 0.5
+            self.cum_reward += self.reward
           #  percentage_used_machine = self.calculate_percent_machine()
           #  info["machine-Used-Percentage"] = percentage_used_machine
 
@@ -154,7 +156,7 @@ class customEnv(gym.Env):
                 "cpu_req": self.train_data[self.episode_no][self.i][self.attr_idx['cpu_req']],
                 "mem_req": self.train_data[self.episode_no][self.i][self.attr_idx['mem_req']]
             })
-
+            self.cum_reward += self.reward
             self.update_state()
    #           self.update_machine_state_rem_time()
             usages = [cpu_usage, mem_usage]
@@ -182,6 +184,7 @@ class customEnv(gym.Env):
             info["Steps_Without_Wait"] = total_steps_excluding_wait
             info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wai'''
             self.episode_no += 1
+            self.cum_reward += self.reward
             #info["Percentage_Task_Completed"] = self.calculate_task_completed_epi()
         info = self.get_metric()
         return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
@@ -201,6 +204,7 @@ class customEnv(gym.Env):
             info["Steps_Without_Wait"] = total_steps_excluding_wait
             info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
             info["Episode_End_Reward"] = self.reward
+            info["Cumulative_Reward"] = self.cum_reward
         else:
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
@@ -275,7 +279,7 @@ class customEnv(gym.Env):
         self.i = 0  # steps taken considering tasks
         self.j = 0  # steps including wait action
         self.done = False
-
+        self.cum_reward = 0
         for i in self.train_data.keys():
             self.max_number_of_tasks_per_job.append(len(self.train_data[i]))  # this list \
             # contains the length of each episode
