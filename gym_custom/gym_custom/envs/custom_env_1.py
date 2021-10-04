@@ -10,6 +10,8 @@ import os
 import imageio
 import matplotlib.pyplot as plt
 np.random.seed(GYM_ENV_CFG['SEED'])
+from rewards import *
+
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self,
@@ -156,7 +158,16 @@ class customEnv(gym.Env):
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
             usage = list(self.state[self.i, self.nb_dim*2:(self.nb_dim*2+self.nb_w_nodes)+self.nb_w_nodes])
             #percent_used_machines = self.calculate_percent_machine(usage)
-            self.reward = self.get_intermediate_reward(action=action, usages=usage)
+
+            if DRL_CFG['reward_type'] == 'under_util':
+                self.reward = under_util_reward(usage)
+
+            elif DRL_CFG['reward_type'] == 'under_util':
+                self.reward = get_intermediate_reward(action=action, usages= usage, updated_capacities=self.machine_capacity)
+
+            elif DRL_CFG['reward_type'] == 'over_util':
+                self.reward = over_util_reward()
+#            self.reward = self.get_intermediate_reward(action=action, usages=usage)
             self.i += 1  # increment only when we place task
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
@@ -164,11 +175,10 @@ class customEnv(gym.Env):
 
         if self.no_more_steps() or self.termination_conditon_waiting():
             self.done = True
-
             # retrieve all the tasks with min end time
             #tasks_with_maximum_time = [k for k, v in self.task_end_time.items() if v == max_end_time]
             #self.clock_time = max_end_time
-            self.reward = self.episode_end_reward()
+            self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time)
             for machine in range(self.nb_w_nodes):
                 cpu_limit, memory_limit = self.machine_limits(machine)
                 self.machine_capacity[machine] = [cpu_limit, memory_limit]
@@ -292,7 +302,7 @@ class customEnv(gym.Env):
 
         return copy.deepcopy(np.expand_dims(self.state,0))
 
-    def get_intermediate_reward(self, action, usages):
+    '''def get_intermediate_reward(self, action, usages):
         usage_2d = [usages[i] + usages[i + self.nb_w_nodes] for i in range(self.nb_w_nodes)]
      #   usage_2d = np.insert(usage_2d, 0, 0.0)  # we insert the wait action here
         least_used_machines = list(np.where(usage_2d == min(usage_2d))[0])
@@ -306,9 +316,9 @@ class customEnv(gym.Env):
             reward = -20
         else:
             reward = 1
-        return reward
+        return reward'''
 
-    def episode_end_reward(self):
+    '''def episode_end_reward(self):
         # check for this Episode End Reward
         #if not all(self.task_end_time.values()):
         # if the dict is not empty
@@ -316,7 +326,7 @@ class customEnv(gym.Env):
             reward = 0.2 * (self.clock_time / max(self.task_end_time.values()))
         else:
             reward = 10  # Configure this Value
-        return reward
+        return reward'''
 
     # First Termination condition
     def no_more_steps(self):
@@ -359,10 +369,10 @@ class customEnv(gym.Env):
         plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
         plt.ylim(0, 100)
         plt.legend()
-        plt.show()
-       # name = str(timestep) + ".jpeg"
-       # fig.savefig(os.path.join(path_to_dir, name), bbox_inches='tight', dpi=150)
-       # plt.close()
+        #plt.show()
+        name = str(timestep) + ".jpeg"
+        fig.savefig(os.path.join(path_to_dir, name), bbox_inches='tight', dpi=150)
+        plt.close()
 
     def make_gif(self,path):
         png_dir = path

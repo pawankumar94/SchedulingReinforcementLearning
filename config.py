@@ -1,5 +1,4 @@
 GYM_ENV_CFG = {
-
     # Machine Configuration: {5,8,10,20}
     'NB_NODES': 8,
     'SEED': 42,
@@ -9,6 +8,7 @@ GYM_ENV_CFG = {
     'MC_CAP': 'BBBBBBBA',
     'MM_CAP': 'BBBBBBBA',
     'NB_RES_DIM': 2,
+
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
 # the total cores available per machine type
@@ -24,7 +24,7 @@ GLOBAL_CFG = {
     'MM_CAP_VALUES': {'A': 0.75, 'B': 0.38},
     'SEED': 42,
     'features_to_include': ['cpu_req', 'mem_req'],
-    'DATA_LOCATION': 'input_1'
+    'K_u': 2,
 }
 
 DRL_CFG = {
@@ -41,7 +41,9 @@ DRL_CFG = {
     'MODEL_ARCH': 'dqn',
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
-    'Update_target_every': 5
+    'Update_target_every': 5,
+    # ['under_util', 'over_util' , 'simple_reward']
+    'reward_type': 'under_util'
 }
 
 
