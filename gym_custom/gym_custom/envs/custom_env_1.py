@@ -164,9 +164,9 @@ class customEnv(gym.Env):
 
         if self.no_more_steps() or self.termination_conditon_waiting():
             self.done = True
-            max_end_time = max(self.task_end_time.values())
+
             # retrieve all the tasks with min end time
-            tasks_with_maximum_time = [k for k, v in self.task_end_time.items() if v == max_end_time]
+            #tasks_with_maximum_time = [k for k, v in self.task_end_time.items() if v == max_end_time]
             #self.clock_time = max_end_time
             self.reward = self.episode_end_reward()
             for machine in range(self.nb_w_nodes):
