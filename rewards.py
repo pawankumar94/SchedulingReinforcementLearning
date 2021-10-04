@@ -4,8 +4,9 @@ from config import *
 
 def under_util_reward(usages):
     k_u = GLOBAL_CFG['K_u']
+    scale_factor = 5
     usage_2d = [usages[i] + usages[i + GYM_ENV_CFG['NB_NODES']] for i in range(GYM_ENV_CFG['NB_NODES'])]
-    reward = -(np.sum(np.power(usage_2d, k_u)))
+    reward = -(np.sum(np.power(usage_2d, k_u))/scale_factor)
     return reward
 
 def get_intermediate_reward(action, usages, updated_capacities):
@@ -16,14 +17,14 @@ def get_intermediate_reward(action, usages, updated_capacities):
     if action in least_used_machines:
         reward = -10
     elif (updated_cpu_cap <= 0) or (updated_memory_cap <= 0):
-        reward = -20
+        reward = 20
     else:
         reward = 1
     return reward
 
 
 def over_util_reward():
-    return 1
+    return -20
 
 def episode_end_reward(task_end_time, clock_time):
     # check for this Episode End Reward

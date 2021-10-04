@@ -64,6 +64,7 @@ class customEnv(gym.Env):
                                             shape=(1, self.max_no_task, self.cols_state),
                                              dtype = np.float64)
         self.reset()
+        self.overshoot_counter = 0
 
     def get_task_usages(self):
         cpu_usage_col = self.attr_idx['cpu_rate']
@@ -103,12 +104,15 @@ class customEnv(gym.Env):
         # current task
         info = {}
         percentage_machine_used = self.calculate_percent_machine()
+
         max_used_machines = []
         for key in percentage_machine_used:
             cpu_used = percentage_machine_used[key][0]
             mem_used = percentage_machine_used[key][0]
             if (cpu_used >= 100.0) or (mem_used >= 100):
                 max_used_machines.append(key)
+
+
 
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
@@ -118,6 +122,14 @@ class customEnv(gym.Env):
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
+
+
+        elif (action -1) in max_used_machines:
+            self.reward = over_util_reward()
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Precentage"] = percentage_used_machine
+            state = copy.deepcopy(self.state)
+            self.state = state
 
         elif action == self.wait_action:
             min_end_time = min(self.task_end_time.values())
