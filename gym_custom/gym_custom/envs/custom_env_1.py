@@ -6,6 +6,8 @@ import gym
 import numpy as np
 from config import *
 from gym import spaces
+import os
+import imageio
 import matplotlib.pyplot as plt
 np.random.seed(GYM_ENV_CFG['SEED'])
 class customEnv(gym.Env):
@@ -65,22 +67,7 @@ class customEnv(gym.Env):
         real_mem_usg = self.train_data[self.episode_no][self.i][mem_usg_col]
         return real_cpu_usg, real_mem_usg
 
-    # Not Important Function
-    '''def update_machine_state_rem_time(self):
-        for key in self.machine_status:
-            running_task = self.machine_status[key]
-            run_task_temp = []
-            for t_dict in running_task:
-                t_dict['rem_time'] -= 1
-                if t_dict['rem_time'] > 0:
-                    run_task_temp.append(t_dict)
-            self.machine_status[key] = run_task_temp
-'''
-    def update_state(self, wait_flag=False, task=None):
-
-        '''if task != None \
-                and  task > len(self.all_episodes_duration[self.episode_no]):
-            return'''
+    def update_state(self, wait_flag=False, task=None):   # here we pass the task with min duration
 
         if not wait_flag:
             for machine in self.machine_status:
@@ -93,7 +80,7 @@ class customEnv(gym.Env):
             self.state[self.i][0] = 1  # Assigns to Task Placed as one
 
         else:
-
+            # when wait action Taken we remove the Task with minimum end time
             for key in task:
                 machine_no, cpu_usage, mem_usage = list(self.memory[key].values())
                 length_of_current_episode = len(self.all_episodes_duration[self.episode_no])
@@ -110,6 +97,13 @@ class customEnv(gym.Env):
         time_left_for_task = self.all_episodes_duration[self.episode_no][self.i]  # duration of \
         # current task
         info = {}
+        percentage_machine_used = self.calculate_percent_machine()
+        max_used_machines = []
+        for key in percentage_machine_used:
+            cpu_used = percentage_machine_used[key][0]
+            mem_used = percentage_machine_used[key][0]
+            if (cpu_used >= 100.0) or (mem_used >= 100):
+                max_used_machines.append(key)
 
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
@@ -117,15 +111,14 @@ class customEnv(gym.Env):
             self.state = state
             self.reward = 0
             self.cum_reward += self.reward
-            #percentage_used_machine = self.calculate_percent_machine()
-            #info["machine-Used-Percentage"] = percentage_used_machine
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Precentage"] = percentage_used_machine
 
         elif action == self.wait_action:
             min_end_time = min(self.task_end_time.values())
+            # retrieve all the tasks with min end time
             tasks_with_minimum_time = [k for k, v in self.task_end_time.items() if v==min_end_time]
-            #task_with_min_time = min(self.task_end_time, key=self.task_end_time.get)
-            #min_end_time = self.task_end_time[task_with_min_time]
-
+            # we complete the Tasks with minimum Time Value
             for i in (tasks_with_minimum_time):
                 machine_no, cpu_usage, mem_usage = list(self.memory[i].values())
                 usages = [cpu_usage, mem_usage]
@@ -138,8 +131,8 @@ class customEnv(gym.Env):
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
             self.reward = 0.5
             self.cum_reward += self.reward
-          #  percentage_used_machine = self.calculate_percent_machine()
-          #  info["machine-Used-Percentage"] = percentage_used_machine
+            percentage_used_machine = self.calculate_percent_machine()
+            info["machine-Used-Percentage"] = percentage_used_machine
 
         else:
             action -= 1
@@ -158,7 +151,6 @@ class customEnv(gym.Env):
             })
             self.cum_reward += self.reward
             self.update_state()
-   #           self.update_machine_state_rem_time()
             usages = [cpu_usage, mem_usage]
             self.change_in_machine_capacity(action = action, usages=usages, placed= True)
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
@@ -168,31 +160,28 @@ class customEnv(gym.Env):
             self.i += 1  # increment only when we place task
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
-           # self.gen_plot()
+         #   self.gen_plot()
 
         if self.no_more_steps() or self.termination_conditon_waiting():
             self.done = True
+            max_end_time = max(self.task_end_time.values())
+            # retrieve all the tasks with min end time
+            tasks_with_maximum_time = [k for k, v in self.task_end_time.items() if v == max_end_time]
+            #self.clock_time = max_end_time
             self.reward = self.episode_end_reward()
-            ''''percentage_used_machine = self.calculate_percent_machine()
-            info["Final_Machines_Percentage_usage"] = percentage_used_machine
-            percent_of_task_completed, total_no_of_tasks\
-                , total_steps_including_waiting, total_steps_excluding_wait \
-                = self.calculate_task_completed_epi()
-            info["Percentage_Task_Completed"] = percent_of_task_completed
-            info["Total_Task_Episode"] = total_no_of_tasks
-            info["Steps_Including_Wait"] = total_steps_including_waiting
-            info["Steps_Without_Wait"] = total_steps_excluding_wait
-            info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wai'''
+            for machine in range(self.nb_w_nodes):
+                cpu_limit, memory_limit = self.machine_limits(machine)
+                self.machine_capacity[machine] = [cpu_limit, memory_limit]
+            info = self.get_metric()
             self.episode_no += 1
             self.cum_reward += self.reward
-            #info["Percentage_Task_Completed"] = self.calculate_task_completed_epi()
-        info = self.get_metric()
         return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
 
     def get_metric(self):
         info = {}
         # Log the reward
         if self.no_more_steps() or self.termination_conditon_waiting():
+            # we complete all the running Tasks
             percentage_used_machine = self.calculate_percent_machine()
             info["Final_Machines_Percentage_usage"] = percentage_used_machine
             percent_of_task_completed, total_no_of_tasks \
@@ -226,14 +215,15 @@ class customEnv(gym.Env):
 
     def calculate_percent_machine(self):
         percentage_per_machine = {}
-        for machine in range(self.nb_w_nodes):
-            cpu_limit, memory_limit = self.machine_limits(machine)
-            changed_cpu_limit, changed_mem_limit = self.machine_capacity[machine]
-            percentage_cpu = ((cpu_limit - changed_cpu_limit) / cpu_limit) * 100
+        for machine in range(self.nb_w_nodes):  #8
+            cpu_limit, memory_limit = self.machine_limits(machine)  # orignal limit of Machines
+            changed_cpu_limit, changed_mem_limit = self.machine_capacity[machine] # Changed Limit of the Machine
+            percentage_cpu = ((cpu_limit - changed_cpu_limit) / cpu_limit) * 100  # percentage of Machine Used after placement5
             percetage_mem = ((memory_limit- changed_mem_limit) / memory_limit) * 100
             percentage_per_machine[machine] = [percentage_cpu, percetage_mem]
         return percentage_per_machine
 
+    # this function set to True would randomly initialize 30 % machines with min value
     def random_initialize_machine(self,random_initialize):
         if random_initialize:
             self.machine_mask = np.random.choice([True, False], size=self.nb_w_nodes, p=[0.6, 0.4])
@@ -264,11 +254,6 @@ class customEnv(gym.Env):
                state_one_hot = self.state[task, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
                state_one_hot[action] = 0.0  # we remove the task from machine in state
                self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
-
-            '''for key in task_index:
-                state_one_hot = self.state[key, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
-                state_one_hot[action] = 0.0'''
-
         else:
             state_one_hot = self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
             state_one_hot[action] = 1.0
@@ -317,8 +302,6 @@ class customEnv(gym.Env):
         reward = 0
         if action in least_used_machines:
             reward = -10
-        #elif usage_2d[action] > total_cap:
-        #    reward = -5
         elif (updated_cpu_cap<=0) or (updated_memory_cap<=0):
             reward = -20
         else:
@@ -326,11 +309,13 @@ class customEnv(gym.Env):
         return reward
 
     def episode_end_reward(self):
-        if not all(self.task_end_time.values()):
-            reward = 100 * (self.clock_time / max(self.task_end_time.values()))
+        # check for this Episode End Reward
+        #if not all(self.task_end_time.values()):
+        # if the dict is not empty
+        if  self.task_end_time.keys():
+            reward = 0.2 * (self.clock_time / max(self.task_end_time.values()))
         else:
-            #reward = 100 * (self.clock_time / max(self.task_end_time.values()))
-            reward = 10
+            reward = 10  # Configure this Value
         return reward
 
     # First Termination condition
@@ -375,9 +360,9 @@ class customEnv(gym.Env):
         plt.ylim(0, 100)
         plt.legend()
         plt.show()
-   #     name = str(timestep) + ".jpeg"
-   #     print(name)
-   #     fig.savefig(os.path.join(path_to_dir, name), bbox_inches='tight', dpi=150)
+       # name = str(timestep) + ".jpeg"
+       # fig.savefig(os.path.join(path_to_dir, name), bbox_inches='tight', dpi=150)
+       # plt.close()
 
     def make_gif(self,path):
         png_dir = path
