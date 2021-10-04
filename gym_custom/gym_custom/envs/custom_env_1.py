@@ -9,6 +9,9 @@ from gym import spaces
 import os
 import imageio
 import matplotlib.pyplot as plt
+import glob
+from PIL import Image
+import natsort
 np.random.seed(GYM_ENV_CFG['SEED'])
 from rewards import *
 
@@ -377,9 +380,11 @@ class customEnv(gym.Env):
     def make_gif(self,path):
         png_dir = path
         images = []
-        for file_name in sorted(os.listdir(png_dir)):
+        files = os.listdir(png_dir)
+        sorted_list = natsort.natsorted(files,reverse=False)
+        for file_name in sorted_list:
             if file_name.endswith('.jpeg'):
                 file_path = os.path.join(png_dir, file_name)
                 images.append(imageio.imread(file_path))
         gif_name = "movie.gif"
-        imageio.mimsave(os.path.join(path, gif_name), images)
+        imageio.mimsave(os.path.join(path, gif_name), images,format='GIF', duration = 0.4)
