@@ -183,7 +183,7 @@ class customEnv(gym.Env):
             info["machine-Used-Percentage"] = percentage_used_machine
          #   self.gen_plot()
 
-        if self.no_more_steps() or self.termination_conditon_waiting():
+        if self.no_more_steps(): #or self.termination_conditon_waiting():
             self.done = True
             # retrieve all the tasks with min end time
             #tasks_with_maximum_time = [k for k, v in self.task_end_time.items() if v == max_end_time]
