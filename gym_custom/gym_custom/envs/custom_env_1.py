@@ -112,24 +112,22 @@ class customEnv(gym.Env):
             if (cpu_used >= 100.0) or (mem_used >= 100):
                 max_used_machines.append(key)
 
-
-
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
-            state = copy.deepcopy(self.state)
-            self.state = state
+            #state = copy.deepcopy(self.state)
+            #self.state = state
             self.reward = 0
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
 
 
+
         elif (action -1) in max_used_machines:
             self.reward = over_util_reward()
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
-            state = copy.deepcopy(self.state)
-            self.state = state
+
 
         elif action == self.wait_action:
             min_end_time = min(self.task_end_time.values())
@@ -200,12 +198,12 @@ class customEnv(gym.Env):
             info = self.get_metric()
             self.episode_no += 1
             self.cum_reward += self.reward
-        return copy.deepcopy(np.expand_dims(self.state,0)), float(self.reward), self.done, info
+        return np.expand_dims(self.state,0), float(self.reward), self.done, info
 
     def get_metric(self):
         info = {}
         # Log the reward
-        if self.no_more_steps() or self.termination_conditon_waiting():
+        if self.no_more_steps(): #or self.termination_conditon_waiting():
             # we complete all the running Tasks
             percentage_used_machine = self.calculate_percent_machine()
             info["Final_Machines_Percentage_usage"] = percentage_used_machine
@@ -225,7 +223,7 @@ class customEnv(gym.Env):
             info["Step-Reward"] = self.reward
         return info
 
-
+    # Test with removing it
     def termination_conditon_waiting(self):
         maximum_waiting_current_epi = len(self.train_data[self.episode_no]) * 2
         return self.j >= maximum_waiting_current_epi
@@ -346,7 +344,7 @@ class customEnv(gym.Env):
     # First Termination condition
     def no_more_steps(self):
         self.max_steps_current_epi = len(self.train_data[self.episode_no]) - 1
-        return self.i >= self.max_steps_current_epi
+        return self.i == self.max_steps_current_epi
 
     def machine_limits(self, machine):
         machine_cpu_type = GYM_ENV_CFG['MC_CAP'][machine]

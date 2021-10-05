@@ -16,8 +16,10 @@ def get_intermediate_reward(action, usages, updated_capacities):
     reward = 0
     if action in least_used_machines:
         reward = -10
+
     elif (updated_cpu_cap <= 0) or (updated_memory_cap <= 0):
-        reward = 20
+        reward = -20
+
     else:
         reward = 1
     return reward
