@@ -12,7 +12,7 @@ GYM_ENV_CFG = {
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
 # the total cores available per machine type
-# MM_CAP_VALUES (Machine Memeory) represents the total normalized
+# MM_CAP_VALUES (Machine Memory) represents the total normalized
 # memory available per machine type
 GLOBAL_CFG = {
     'Max_No_of_Task': 100,
@@ -43,7 +43,7 @@ DRL_CFG = {
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
     'Update_target_every': 5,
     # ['under_util', 'over_util' , 'simple_reward']
-    'reward_type': 'under_util'
+    'reward_type': 'simple'
 }
 
 

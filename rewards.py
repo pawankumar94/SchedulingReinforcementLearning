@@ -32,8 +32,11 @@ def episode_end_reward(task_end_time, clock_time):
     # check for this Episode End Reward
     # if not all(self.task_end_time.values()):
     # if the dict is not empty
+    # if all tasks were placed
     if task_end_time.keys():
-        reward = 0.2 * (clock_time / max(task_end_time.values()))
+        reward = 100 * (clock_time / max(task_end_time.values())) # replace the task end time with max (theoretical time)
     else:
+        # if you skip any task
         reward = 10  # Configure this Value
+
     return reward

@@ -121,10 +121,10 @@ class customEnv(gym.Env):
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
 
-        elif (action -1) in max_used_machines:
-            self.reward = over_util_reward()
-            percentage_used_machine = self.calculate_percent_machine()
-            info["machine-Used-Precentage"] = percentage_used_machine
+        #elif (action -1) in max_used_machines:
+        #    self.reward = over_util_reward()
+        #    percentage_used_machine = self.calculate_percent_machine()
+         #   info["machine-Used-Precentage"] = percentage_used_machine
 
         elif action == self.wait_action:
             min_end_time = min(self.task_end_time.values())
