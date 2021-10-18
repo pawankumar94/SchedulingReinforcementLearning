@@ -183,7 +183,7 @@ class customEnv(gym.Env):
         else:
             # Since Machine in State ranges from (0-7)
             action -= 1
-            self.i += 1  # increment only when we place task
+
             if not self.one_task:
                 self.update_one_hot_encoding(action=action)
             # Capture history of Task
@@ -227,6 +227,7 @@ class customEnv(gym.Env):
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
         #   self.gen_plot()
+            self.i += 1  # increment only when we place task
 
         if self.no_more_steps():  # or self.termination_conditon_waiting():
             self.done = True
@@ -237,6 +238,7 @@ class customEnv(gym.Env):
                 self.machine_capacity[machine] = [cpu_limit, memory_limit]
 
             info = self.get_metric()
+
             self.episode_no += 1
             self.cum_reward += self.reward
 
