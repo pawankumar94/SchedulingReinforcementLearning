@@ -104,3 +104,10 @@ def gen_plot(state, timestep=None, path_to_dir=None):
     plt.xticks(r + width / 2, ['M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8'])
     plt.legend()
     plt.show()
+
+def machine_limits(machine):
+    machine_cpu_type = GYM_ENV_CFG['MC_CAP'][machine]
+    machine_cpu_cap = GLOBAL_CFG['MC_CAP_VALUES'][machine_cpu_type]
+    machine_mem_type = GYM_ENV_CFG['MM_CAP'][machine]
+    machine_mem_cap = GLOBAL_CFG['MM_CAP_VALUES'][machine_mem_type]
+    return [machine_cpu_cap, machine_mem_cap]

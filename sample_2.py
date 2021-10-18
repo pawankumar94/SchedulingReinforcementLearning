@@ -71,6 +71,7 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             print("reward:", reward)
             replay_mem.append([state, next_state, reward, done])
             state = next_state
+            action_mask = env.get_valid_action_mask()
             env.gen_plot(path_to_dir=path)
             if done:
                 print("episodeReward", reward)

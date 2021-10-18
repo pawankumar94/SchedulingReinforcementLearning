@@ -8,6 +8,7 @@ GYM_ENV_CFG = {
     'MC_CAP': 'BBBBBBBA',
     'MM_CAP': 'BBBBBBBA',
     'NB_RES_DIM': 2,
+    'One-Task': True,
 
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
