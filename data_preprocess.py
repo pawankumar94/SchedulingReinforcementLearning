@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 import numpy as np
 from config import *
@@ -63,24 +62,18 @@ def gen_states(dataset, features_to_include):
 def generate_visualizations(synthetic_df, sample_dict):
     plt.subplots(figsize=(20, 20))
     count = 1
-    for idx,type in enumerate(GLOBAL_CFG['features_to_include']):
-        plt.subplot(3,2,count)
+    for idx, type in enumerate(GLOBAL_CFG['features_to_include']):
+        plt.subplot(3, 2, count)
         plt.title(sample_dict[type])
         sample_list = synthetic_df[type]
         sample_df = pd.DataFrame(sample_list)
-        conditions = [sample_df[type] > 0.599,
-                          (sample_df[type] >= 0.299) & (sample_df[type] <= 0.599),
-                          sample_df[type] < 0.299]
-        choices = ["high","medium","low"]
+        conditions = [sample_df[type] > 0.599, (sample_df[type] >= 0.299) \
+                      & (sample_df[type] <= 0.599), sample_df[type] < 0.299]
+        choices = ["high", "medium", "low"]
         sample_df["load_class"] = np.select(conditions, choices)
-        sns.set(rc={'figure.figsize':(15,5.27)})
-        sns.histplot(data = sample_df
-                ,x = type,
-                alpha = 1
-                ,bins = 50,
-                hue = 'load_class'
-                )
-        count+=1
+        sns.set(rc={'figure.figsize': (15, 5.27)})
+        sns.histplot(data=sample_df, x=type, alpha=1, bins=50, hue='load_class')
+        count += 1
     plt.show()
 
 def gen_plot(state, timestep=None, path_to_dir=None):

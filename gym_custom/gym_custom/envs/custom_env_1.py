@@ -34,6 +34,7 @@ class customEnv(gym.Env):
         self.all_episodes_duration = task_duration
         # [cpu_req, mem_req]
         self.state_idx = state_idx
+        self.episode_no = 0
         # cpu:0 and memory:1
         self.attr_idx = attr_idx
         #self.start_idx = start_idx # not needed
@@ -57,7 +58,7 @@ class customEnv(gym.Env):
         self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']
         # used in Machine Update in State
         self.machine_status = {}
-        self.episode_no = 0
+
         self.reward = 0
         self.done = False
         # Indicator of Current Time in the Environment
@@ -182,7 +183,7 @@ class customEnv(gym.Env):
         else:
             # Since Machine in State ranges from (0-7)
             action -= 1
-
+            self.i += 1  # increment only when we place task
             if not self.one_task:
                 self.update_one_hot_encoding(action=action)
             # Capture history of Task
@@ -222,7 +223,7 @@ class customEnv(gym.Env):
                 self.reward = over_util_reward()
 
             self.cum_reward += self.reward
-            self.i += 1  # increment only when we place task
+
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
         #   self.gen_plot()
