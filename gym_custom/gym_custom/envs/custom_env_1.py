@@ -13,6 +13,8 @@ import natsort
 np.random.seed(GYM_ENV_CFG['SEED'])
 from rewards import *
 
+# A task aquires 50 % of requests and does not increase at each timestep
+
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self,
@@ -117,12 +119,8 @@ class customEnv(gym.Env):
             # Cpureq+Mem_req+Cpu_Usages + Mem Usages + Cpu free limits + Mem Free limits
             self.nb_rows = (self.nb_dim + 1) * 2
             self.state = np.zeros((self.nb_rows, self.cols_state))
-            # Assigning Cpu Req and Mem req in State space
-            cpu_req, mem_req = self.current_epi_data[self.i][self.nb_dim:self.nb_dim * 2]
-            # Row 0 -> Cpu Requests
-            self.state[0] = cpu_req
-            # Row1 -> Mem Requests
-            self.state[1] = mem_req
+
+            self.moveto_next_task()
             self.observation_space = spaces.Box(low=0,
                                                 high=1,
                                                 shape=(1, self.nb_rows, self.cols_state),
@@ -134,6 +132,13 @@ class customEnv(gym.Env):
 
         return copy.deepcopy(np.expand_dims(self.state, 0)) # Reshape state for ACME
 
+    def moveto_next_task(self):
+        # Assigning Cpu Req and Mem req in State space
+        cpu_req, mem_req = self.current_epi_data[self.i][self.nb_dim:self.nb_dim * 2]
+        # Row 0 -> Cpu Requests
+        self.state[0] = cpu_req
+        # Row1 -> Mem Requests
+        self.state[1] = mem_req
 
     def step(self, action):
 
@@ -149,7 +154,7 @@ class customEnv(gym.Env):
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
             # We dont make any change in the environment
-            self.reward = 0
+            self.reward = -10
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
@@ -175,7 +180,7 @@ class customEnv(gym.Env):
 
             self.update_state(wait_flag=True, task=tasks_with_minimum_time)
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
-            self.reward = calculate_wait_reward() #0.5
+            self.reward = calculate_wait_reward(len(tasks_with_minimum_time)) #0.5
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
@@ -186,11 +191,13 @@ class customEnv(gym.Env):
 
             if not self.one_task:
                 self.update_one_hot_encoding(action=action)
+
             # Capture history of Task
             self.memory[self.i] = {"Machine_No": action,
                                    "cpu_usage": cpu_usage,
                                    "mem_usage": mem_usage,
                                    }
+
             # Used for updating machine free limits
             self.machine_status[action].append({
                 "cpu": cpu_usage,
@@ -226,8 +233,13 @@ class customEnv(gym.Env):
 
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
-        #   self.gen_plot()
-            self.i += 1  # increment only when we place task
+            self.i +=1
+            self.machine_status = {}
+            for key in range(self.nb_w_nodes):
+                self.machine_status[key] = []
+            if self.one_task:
+                self.moveto_next_task()
+             # increment only when we place task
 
         if self.no_more_steps():  # or self.termination_conditon_waiting():
             self.done = True
@@ -316,10 +328,11 @@ class customEnv(gym.Env):
 
     def get_valid_action_mask(self):
         x = np.ones(self.action_space.n)
+        cpu_usage, mem_usage= self.train_data[self.episode_no][self.i][4:6]
         for element in self.machine_capacity:
             cpu_capacity = self.machine_capacity[element][0]
             mem_capacity = self.machine_capacity[element][1]
-            if (cpu_capacity <= 0) or (mem_capacity <= 0):
+            if (cpu_capacity < cpu_usage) or (mem_capacity < mem_usage):
                 x[0] = 0
         return x
 

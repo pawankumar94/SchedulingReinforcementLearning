@@ -9,29 +9,30 @@ def under_util_reward(usages):
     reward = -(np.sum(np.power(usage_2d, k_u))/scale_factor)
     return reward
 
-def calculate_wait_reward():
-    return 0.5
+def calculate_wait_reward(no_of_task_ends):
+    return 0.5 * no_of_task_ends
 
 
 def get_intermediate_reward(action, usages, updated_capacities):
+    # take in consideration req made by task
     usage_2d = [usages[i] + usages[i + GYM_ENV_CFG['NB_NODES']] for i in range(GYM_ENV_CFG['NB_NODES'])]
     least_used_machines = list(np.where(usage_2d == min(usage_2d))[0])
     updated_cpu_cap, updated_memory_cap = updated_capacities[action]
     limit_cpu, limit_mem = machine_limits(action)
     percentage_cpu = ((limit_cpu - updated_cpu_cap) / limit_cpu) * 100  # percentage of Machine Used after placement5
     percentage_mem = ((limit_mem - updated_memory_cap) / limit_cpu) * 100
+    # remove
+    '''if action in least_used_machines:
+        reward = -15'''
 
-    if action in least_used_machines:
-        reward = -15
-
-    elif (percentage_mem > 95.0) and (percentage_mem > 95.0):
+    if (percentage_mem >= 95.0) and (percentage_cpu >= 95.0):
         reward = -10
 
-    elif (percentage_cpu >= 30.0 and  percentage_cpu <90.0) \
-            and (percentage_mem >= 30.0 and  percentage_mem <= 90.0) :
-        reward = 20
+    elif (percentage_cpu >= 30.0 and  percentage_cpu <95.0) \
+            and (percentage_mem >= 30.0 and  percentage_mem < 95.0) :
+        reward = 10
     else:
-        reward = 3
+        reward = -15
 
     return reward
 

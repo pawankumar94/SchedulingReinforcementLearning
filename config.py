@@ -39,7 +39,7 @@ DRL_CFG = {
     'GAMMA': 0.99,
     'LR': 1e-3,
     'TARGET_UPD_INT': 500,
-    'MODEL_ARCH': 'dqn',
+    'MODEL_ARCH': 'DDQN',
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
     'Update_target_every': 5,

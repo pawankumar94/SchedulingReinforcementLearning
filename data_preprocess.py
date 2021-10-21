@@ -38,7 +38,6 @@ def data_gen(sample_size, res_dist_dict, ratio=1):
     df_sample.insert(len(df_sample.columns), "Done", data)  # Task completed Column
     return df_sample
 
-
 def preprocess_data(df, len_data):
     task_data = df
     attr_idx, state_indices = gen_states(dataset=task_data, features_to_include=['cpu_req', 'mem_req'])

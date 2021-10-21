@@ -63,15 +63,17 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             #action = random.choice([x for x in pos for y in range(pos[x])])
             #feasible_actions = masking_machine()
             #action = random.choice(feasible_actions)
-            action = np.random.choice(GYM_ENV_CFG['NB_NODES']+1) ## model.predict()
+            #action = np.random.choice(GYM_ENV_CFG['NB_NODES']+1) ## model.predict()
+            action_mask = env.get_valid_action_mask()
+            action = 3
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
             next_state, reward, done, info = env.step(action)
             print("Information:", info)
             print("reward:", reward)
-            replay_mem.append([state, next_state, reward, done])
+            replay_mem.append({"state":state, "next_state":next_state})
             state = next_state
-            action_mask = env.get_valid_action_mask()
+
             env.gen_plot(path_to_dir=path)
             if done:
                 print("episodeReward", reward)
