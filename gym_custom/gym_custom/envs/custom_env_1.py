@@ -249,7 +249,8 @@ class customEnv(gym.Env):
 
         if self.no_more_steps():  # or self.termination_conditon_waiting():
             self.done = True
-            max_end_time =max[self.all_episodes_duration[self.episode_no]]
+            max_end_time = list(self.all_episodes_duration[self.episode_no])
+            max_end_time = max(max_end_time)
             self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
                                              max_end_time = max_end_time)
 
