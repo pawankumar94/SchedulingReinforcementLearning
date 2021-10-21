@@ -153,15 +153,16 @@ class customEnv(gym.Env):
         # not allow it
 
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
-        '''if (action == self.wait_action) and len(self.task_end_time) == 0:
+        if (action == self.wait_action) and len(self.task_end_time) == 0:
             # We dont make any change in the environment
             self.reward = -10
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
-            info["machine-Used-Precentage"] = percentage_used_machine'''
+            info["machine-Used-Precentage"] = percentage_used_machine
 
         # Rule 2 : If we took wait action and tasks are running
-        if action == self.wait_action:
+        elif action == self.wait_action:
+
             # Extract Tasks with Minimum Ending Time
             min_end_time = min(self.task_end_time.values())
             # retrieve all the tasks with min end time
