@@ -65,7 +65,8 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             #action = random.choice(feasible_actions)
             #action = np.random.choice(GYM_ENV_CFG['NB_NODES']+1) ## model.predict()
             action_mask = env.get_valid_action_mask()
-            action = 3
+            action = env.get_valid_action_mask()
+            action = random.sample(list(enumerate(action)) ,1)[0][0]
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
             next_state, reward, done, info = env.step(action)

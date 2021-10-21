@@ -60,7 +60,7 @@ class customEnv(gym.Env):
         self.nb_dim = GYM_ENV_CFG['NB_RES_DIM']
         # used in Machine Update in State
         self.machine_status = {}
-
+        self.sum_wait = 0
         self.reward = 0
         self.done = False
         # Indicator of Current Time in the Environment
@@ -150,17 +150,18 @@ class customEnv(gym.Env):
         info = {}
         # Free Percentage of Available Machines
         percentage_machine_used = self.calculate_percent_machine()
+        # not allow it
 
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
-        if (action == self.wait_action) and len(self.task_end_time) == 0:
+        '''if (action == self.wait_action) and len(self.task_end_time) == 0:
             # We dont make any change in the environment
             self.reward = -10
             self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
-            info["machine-Used-Precentage"] = percentage_used_machine
+            info["machine-Used-Precentage"] = percentage_used_machine'''
 
         # Rule 2 : If we took wait action and tasks are running
-        elif action == self.wait_action:
+        if action == self.wait_action:
             # Extract Tasks with Minimum Ending Time
             min_end_time = min(self.task_end_time.values())
             # retrieve all the tasks with min end time
@@ -182,6 +183,7 @@ class customEnv(gym.Env):
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
             self.reward = calculate_wait_reward(len(tasks_with_minimum_time)) #0.5
             self.cum_reward += self.reward
+
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
 
@@ -212,8 +214,10 @@ class customEnv(gym.Env):
             self.change_in_machine_capacity(action=action, usages=usages, placed=True)
             self.update_state()
             self.task_end_time[self.i] = time_left_for_task + self.clock_time
+
             if not self.one_task:
                 usage = list(self.state[self.i, self.nb_dim * 2:(self.nb_dim * 2 + self.nb_w_nodes) + self.nb_w_nodes])
+
             else:
                 usage = []
                 cpu_usg = list(self.state[2])
@@ -235,15 +239,19 @@ class customEnv(gym.Env):
             info["machine-Used-Percentage"] = percentage_used_machine
             self.i +=1
             self.machine_status = {}
+
             for key in range(self.nb_w_nodes):
                 self.machine_status[key] = []
+
             if self.one_task:
                 self.moveto_next_task()
              # increment only when we place task
 
         if self.no_more_steps():  # or self.termination_conditon_waiting():
             self.done = True
-            self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time)
+            max_end_time =max[self.all_episodes_duration[self.episode_no]]
+            self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
+                                             max_end_time = max_end_time)
 
             for machine in range(self.nb_w_nodes):
                 cpu_limit, memory_limit = machine_limits(machine)
@@ -258,6 +266,7 @@ class customEnv(gym.Env):
 
 
     def change_in_machine_capacity(self, action, usages, placed=False):
+
         if placed:
             capacity = self.machine_capacity[action]
             # diff = capacity - usages
@@ -268,10 +277,11 @@ class customEnv(gym.Env):
             capacity = self.machine_capacity[action]
             add = [x + y for x, y in zip(capacity, usages)]
             self.machine_capacity[action] = add
-        return
+
 
 
     def update_one_hot_encoding(self, action=None, task_index=None, remove=False):
+
         if remove:
             for task in task_index:
                 action = self.memory[task]['Machine_No']  # we extract the machine no on which the\
@@ -279,6 +289,7 @@ class customEnv(gym.Env):
                 state_one_hot[action] = 0.0  # we remove the task from machine in state
                 self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
         else:
+
             state_one_hot = self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1]
             state_one_hot[action] = 1.0 # Indicator if task is running on this machine
             self.state[self.i, self.nb_dim * 2 + self.nb_w_nodes * 2:-1] = state_one_hot
@@ -327,13 +338,15 @@ class customEnv(gym.Env):
                     self.update_free_machine_limits()
 
     def get_valid_action_mask(self):
-        x = np.ones(self.action_space.n)
+        x = np.ones(GYM_ENV_CFG['NB_NODES'] + 1) # 8
         cpu_usage, mem_usage= self.train_data[self.episode_no][self.i][4:6]
+        x[0]= 0
         for element in self.machine_capacity:
             cpu_capacity = self.machine_capacity[element][0]
             mem_capacity = self.machine_capacity[element][1]
             if (cpu_capacity < cpu_usage) or (mem_capacity < mem_usage):
-                x[0] = 0
+                x[1+element] = 0
+                x[0] = 1
         return x
 
 
@@ -397,6 +410,7 @@ class customEnv(gym.Env):
 
     # First Termination condition
     def no_more_steps(self):
+
         self.max_steps_current_epi = len(self.train_data[self.episode_no]) - 1
         return self.i == self.max_steps_current_epi
 
@@ -409,15 +423,19 @@ class customEnv(gym.Env):
         for key in percentage_used_machine:
             cpu_usages.append(percentage_used_machine[key][0])
             mem_usages.append(percentage_used_machine[key][1])
+
         # cpu_usgages = state[0][4:4 + 8]
         # mem_usages = state[0][4 + 8:4 + 8 * 2]
+
         fig = plt.figure(figsize=(10, 5))
         n = GYM_ENV_CFG['NB_NODES']
         r = np.arange(n)
         width = 0.25
+
         plt.bar(r, cpu_usages, color='g',
                 width=width, edgecolor='black',
                 label='Cpu_usage')
+
         plt.bar(r + width, mem_usages, color='r',
                 width=width, edgecolor='black',
                 label='Memory Usage')
@@ -439,9 +457,11 @@ class customEnv(gym.Env):
         images = []
         files = os.listdir(png_dir)
         sorted_list = natsort.natsorted(files, reverse=False)
+
         for file_name in sorted_list:
             if file_name.endswith('.jpeg'):
                 file_path = os.path.join(png_dir, file_name)
                 images.append(imageio.imread(file_path))
+
         gif_name = "movie.gif"
         imageio.mimsave(os.path.join(path, gif_name), images, format='GIF', duration=0.4)

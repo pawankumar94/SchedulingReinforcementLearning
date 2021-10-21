@@ -40,13 +40,15 @@ def get_intermediate_reward(action, usages, updated_capacities):
 def over_util_reward():
     return -20
 
-def episode_end_reward(task_end_time, clock_time):
+def episode_end_reward(task_end_time, clock_time, max_end_time):
     # check for this Episode End Reward
     # if not all(self.task_end_time.values()):
     # if the dict is not empty
     # if all tasks were placed
+
     if task_end_time.keys():
-        reward = 100 * (clock_time / max(task_end_time.values())) # replace the task end time with max (theoretical time)
+        ended_task = len(task_end_time.keys())
+        reward = (0.5) *( (clock_time / max_end_time) * ended_task)  # replace the task end time with max (theoretical time)
     else:
         # if you skip any task
         reward = 10  # Configure this Value

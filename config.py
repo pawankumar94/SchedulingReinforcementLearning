@@ -43,7 +43,7 @@ DRL_CFG = {
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
     'Update_target_every': 5,
-    # ['under_util', 'over_util' , 'simple_reward']
+    # ['under_util', 'over_util' , 'simple']
     'reward_type': 'simple'
 }
 
