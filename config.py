@@ -9,7 +9,6 @@ GYM_ENV_CFG = {
     'MM_CAP': 'BBBBBBBA',
     'NB_RES_DIM': 2,
     'One-Task': True,
-
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
 # the total cores available per machine type
@@ -26,6 +25,8 @@ GLOBAL_CFG = {
     'SEED': 42,
     'features_to_include': ['cpu_req', 'mem_req'],
     'K_u': 2,
+    'Scale_factor': 10,
+    'Usage_Ratio': {"Cpu":0.4 , 'Mem':0.5}
 }
 
 DRL_CFG = {
