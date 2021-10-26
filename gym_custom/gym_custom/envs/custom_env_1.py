@@ -151,12 +151,13 @@ class customEnv(gym.Env):
         # Free Percentage of Available Machines
         percentage_machine_used = self.calculate_percent_machine()
         # not allow it
+        over_util_penalty = over_util_reward(self.overshoot_counter)
 
         # Rule 1: if we took wait action and there is no task running : len(task_end_time == 0)
         if (action == self.wait_action) and len(self.task_end_time) == 0:
             # We dont make any change in the environment
             self.reward = -10
-            self.cum_reward += self.reward
+            #self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Precentage"] = percentage_used_machine
 
@@ -182,8 +183,12 @@ class customEnv(gym.Env):
 
             self.update_state(wait_flag=True, task=tasks_with_minimum_time)
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
-            self.reward = calculate_wait_reward(len(tasks_with_minimum_time)) #0.5
-            self.cum_reward += self.reward
+
+            # Here we will give the wait_reward + over_util_penalty
+
+            self.reward = calculate_wait_reward(len(tasks_with_minimum_time))
+
+            #self.cum_reward += self.reward
 
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
@@ -231,11 +236,8 @@ class customEnv(gym.Env):
             elif DRL_CFG['reward_type'] == 'simple':
                 self.reward = get_intermediate_reward(action=action, usages=usage, updated_capacities=self.machine_capacity)
 
-            elif DRL_CFG['reward_type'] == 'over_util':
-                self.reward = over_util_reward()
 
-            self.cum_reward += self.reward
-
+           # self.cum_reward += self.reward
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
             self.i +=1
@@ -251,7 +253,7 @@ class customEnv(gym.Env):
         if self.no_more_steps():  # or self.termination_conditon_waiting():
             self.done = True
             max_end_time = list(self.all_episodes_duration[self.episode_no])
-            max_end_time = max(max_end_time)
+            max_end_time = max(max_end_time) # here we extract Task which requires max time to run
             self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
                                              max_end_time = max_end_time)
 
@@ -260,9 +262,8 @@ class customEnv(gym.Env):
                 self.machine_capacity[machine] = [cpu_limit, memory_limit]
 
             info = self.get_metric()
-
             self.episode_no += 1
-            self.cum_reward += self.reward
+            #self.cum_reward += self.reward
 
         return np.expand_dims(self.state, 0), float(self.reward), self.done, info
 
@@ -345,12 +346,16 @@ class customEnv(gym.Env):
         x[0]= 0
         for element in self.machine_capacity:
             cpu_capacity = self.machine_capacity[element][0]
-            mem_capacity = self.machine_capacity[element][1]
+            mem_capacity     = self.machine_capacity[element][1]
             if (cpu_capacity < cpu_usage) or (mem_capacity < mem_usage):
-                x[1+element] = 0
-                x[0] = 1
-        return x
 
+                x[1+element] = 0
+                x[0] = 1 # we enable waiting here
+
+                # Counter which tells the number of times such state was observed
+                self.overshoot_counter +=1
+
+        return x
 
     def get_metric(self):
         info = {}
@@ -368,7 +373,7 @@ class customEnv(gym.Env):
             info["Steps_Without_Wait"] = total_steps_excluding_wait
             info["Wait_steps_taken"] = total_steps_including_waiting - total_steps_excluding_wait
             info["Episode_End_Reward"] = self.reward
-            info["Cumulative_Reward"] = self.cum_reward
+            #info["Cumulative_Reward"] = self.cum_reward
         else:
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine

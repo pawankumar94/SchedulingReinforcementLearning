@@ -25,10 +25,9 @@ def calculate_wait_reward(no_of_task_ends):
     return wait_reward
 
 
-
 def over_util_reward(overutil_counter):
 
-    k_constant = 10
+    k_constant = 2
     overutil_penalty = -(k_constant * overutil_counter)
 
     return overutil_penalty
