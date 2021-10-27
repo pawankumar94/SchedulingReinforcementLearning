@@ -26,7 +26,7 @@ GLOBAL_CFG = {
     'features_to_include': ['cpu_req', 'mem_req'],
     'K_u': 2,
     'Scale_factor': 10,
-    'Usage_Ratio': {"Cpu":0.4 , 'Mem':0.5}
+    'Usage_Ratio': {"Cpu": 0.4,'Mem': 0.5}
 }
 
 DRL_CFG = {
@@ -45,7 +45,7 @@ DRL_CFG = {
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
     'Update_target_every': 5,
     # ['under_util', 'over_util' , 'simple']
-    'reward_type': 'simple'
+    'reward_type': 'under_util'
 }
 
 

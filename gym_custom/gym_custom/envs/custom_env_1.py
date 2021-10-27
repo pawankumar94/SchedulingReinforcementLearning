@@ -80,8 +80,13 @@ class customEnv(gym.Env):
         # used for masking infeasible machines
         self.machine_mask = []
 
+        self.max_end_time = 0
+        self.wait_time = 0
+        self.episode_duration = 0
+
         # updated every step records free limits of each machine
         self.machine_capacity = {}
+
         for machine in range(self.nb_w_nodes):
             # Initialized with Original Capacities in the beginning
             self.machine_capacity[machine] = machine_limits(machine)
@@ -254,8 +259,14 @@ class customEnv(gym.Env):
             self.done = True
             max_end_time = list(self.all_episodes_duration[self.episode_no])
             max_end_time = max(max_end_time) # here we extract Task which requires max time to run
-            self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
-                                             max_end_time = max_end_time)
+            self.max_end_time = max_end_time
+            self.episode_duration = max(self.task_end_time.values())
+            self.wait_time = self.episode_duration - self.max_end_time
+
+            #self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
+             #                                max_end_time = max_end_time)
+
+            self.reward = under_util_reward(usage)
 
             for machine in range(self.nb_w_nodes):
                 cpu_limit, memory_limit = machine_limits(machine)
@@ -351,7 +362,6 @@ class customEnv(gym.Env):
 
                 x[1+element] = 0
                 x[0] = 1 # we enable waiting here
-
                 # Counter which tells the number of times such state was observed
                 self.overshoot_counter +=1
 

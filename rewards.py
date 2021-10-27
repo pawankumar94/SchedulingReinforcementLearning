@@ -5,23 +5,19 @@ from data_preprocess import *
 def under_util_reward(usages):
     k_u = GLOBAL_CFG['K_u']
     usage_2d = [usages[i] + usages[i + GYM_ENV_CFG['NB_NODES']] for i in range(GYM_ENV_CFG['NB_NODES'])]
-    reward = -(np.sum(np.power(usage_2d, k_u))/
-               GLOBAL_CFG['Scale_factor']
-               )
+    reward = -(np.sum(np.power(usage_2d, k_u)))
     return reward
 
  # alternate function
 def wait_penalty(train_data, current_time, episode_no):
     k_u = GLOBAL_CFG['K_u']
     tasks_still_processing = (train_data[episode_no][current_time:]).shape[0]
-    wait_penalty = -((k_u * tasks_still_processing) /
-                      GLOBAL_CFG['Scale_factor']
-                     )
+    wait_penalty = -((k_u * tasks_still_processing) )
     return wait_penalty
 
 def calculate_wait_reward(no_of_task_ends):
     # if more number of tasks ends then value decreases
-    wait_reward=  - (1/ no_of_task_ends)
+    wait_reward =  - (1 / no_of_task_ends)
     return wait_reward
 
 
@@ -60,7 +56,6 @@ def episode_end_reward(task_end_time, clock_time, max_end_time):
     # if not all(self.task_end_time.values()):
     # if the dict is not empty
     # if all tasks were placed
-
     if task_end_time.keys():
         ended_task = len(task_end_time.keys())
         reward = (0.5) * ((clock_time / max_end_time) * ended_task)  # replace the task end time with max (theoretical time)
