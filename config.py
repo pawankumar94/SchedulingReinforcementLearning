@@ -14,6 +14,7 @@ GYM_ENV_CFG = {
 # the total cores available per machine type
 # MM_CAP_VALUES (Machine Memory) represents the total normalized
 # memory available per machine type
+
 GLOBAL_CFG = {
     'Max_No_of_Task': 100,
     'Max_No_of_Jobs': 10,
@@ -34,18 +35,26 @@ DRL_CFG = {
     'epsilon_start': 1.0,
     'min_mem_size': 35,
     'epsilon_final': 0.001,
-    'replay_size': 1_000,
+    'replay_size': 1_00_000,
     'epsilon_decay': 0.9975,
     'BETA_START': 0.4,
     'GAMMA': 0.99,
     'LR': 1e-3,
     'TARGET_UPD_INT': 500,
+    # [DQN, DDQN,DUELLINGDQN]
     'MODEL_ARCH': 'DDQN',
+    #['NORMAL','PER']
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
+    #[1,3,5,10]
     'Update_target_every': 5,
     # ['under_util', 'over_util' , 'simple']
-    'reward_type': 'under_util'
+    'reward_type': 'under_util',
+    # [RMSPROP, ADAM]
+    'Optimizer': "RMSPROP",
+    # [HUBER, TDERROR]
+    'Loss': "HUBER",
+    "Gradien_Clip_Val": 1.0
 }
 
 

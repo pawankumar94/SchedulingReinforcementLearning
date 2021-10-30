@@ -350,21 +350,31 @@ class customEnv(gym.Env):
                     self.state[2, machine_no] -= cpu_usage
                     self.state[3, machine_no] -= mem_usage
                     self.update_free_machine_limits()
-
+#1-1
+    #50
+    #30
     def get_valid_action_mask(self):
         x = np.ones(GYM_ENV_CFG['NB_NODES'] + 1) # 8
         cpu_usage, mem_usage= self.train_data[self.episode_no][self.i][4:6]
+        cpu_usage_next, mem_usage_next = self.train_data[self.episode_no][self.i+1][4:6]
         x[0]= 0
         for element in self.machine_capacity:
-            cpu_capacity = self.machine_capacity[element][0]
-            mem_capacity     = self.machine_capacity[element][1]
-            if (cpu_capacity < cpu_usage) or (mem_capacity < mem_usage):
+            #cpu_capacity = self.machine_capacity[element][0]
+            #mem_capacity     = self.machine_capacity[element][1]
+            orignal_cpu_limit, orignal_mem_limit = machine_limits(element)
+            changed_cpu_limit, changed_mem_limit = self.machine_capacity[element]
+
+            #percentage_cpu = ((cpu_limit - changed_cpu_limit) / cpu_limit) * 100
+            #percentage_mem = ((mem_limit - changed_mem_limit) / mem_limit) * 100
+
+            if (changed_cpu_limit < cpu_usage) or (changed_cpu_limit < cpu_usage_next) \
+                    and(changed_mem_limit < mem_usage) or (changed_mem_limit < mem_usage_next):
 
                 x[1+element] = 0
                 x[0] = 1 # we enable waiting here
+
                 # Counter which tells the number of times such state was observed
                 self.overshoot_counter +=1
-
         return x
 
     def get_metric(self):
@@ -431,15 +441,20 @@ class customEnv(gym.Env):
         self.max_steps_current_epi = len(self.train_data[self.episode_no]) - 1
         return self.i == self.max_steps_current_epi
 
-    def gen_plot(self, timestep=None, path_to_dir=None):
+    def gen_plot(self, timestep=None, path_to_dir=None,usages = None):
         state = self.state
         timestep = self.i
         percentage_used_machine = self.calculate_percent_machine()
         cpu_usages = []
         mem_usages = []
-        for key in percentage_used_machine:
-            cpu_usages.append(percentage_used_machine[key][0])
-            mem_usages.append(percentage_used_machine[key][1])
+        if usages == None:
+            for key in percentage_used_machine:
+                cpu_usages.append(percentage_used_machine[key][0])
+                mem_usages.append(percentage_used_machine[key][1])
+        else:
+            for key in sample_dict["machine-Used-Percentage"]:
+                cpu_usages.append(sample_dict["machine-Used-Percentage"][0])
+                mem_usages.append(sample_dict["machine-Used-Percentage"][1])
 
         # cpu_usgages = state[0][4:4 + 8]
         # mem_usages = state[0][4 + 8:4 + 8 * 2]
