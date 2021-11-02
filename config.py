@@ -9,6 +9,10 @@ GYM_ENV_CFG = {
     'MM_CAP': 'BBBBBBBA',
     'NB_RES_DIM': 2,
     'One-Task': True,
+    #[100, 200, 400, 500]
+    "Total_Episodes": 200,
+    #[True, False]
+    "Episode_copy" : True
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
 # the total cores available per machine type
@@ -16,7 +20,8 @@ GYM_ENV_CFG = {
 # memory available per machine type
 
 GLOBAL_CFG = {
-    'Max_No_of_Task': 100,
+    # [1_000, 10_000, 100_000]
+    'Max_No_of_Task': 1_000,
     'Max_No_of_Jobs': 10,
     'TASK_DURS_LOW': [50, 100],
     'TASK_DURS_MEDIUM': [50, 100, 200, 500],
@@ -27,7 +32,8 @@ GLOBAL_CFG = {
     'features_to_include': ['cpu_req', 'mem_req'],
     'K_u': 2,
     'Scale_factor': 10,
-    'Usage_Ratio': {"Cpu": 0.4,'Mem': 0.5}
+    'Usage_Ratio': {"Cpu": 0.4,'Mem': 0.5},
+    "Input_path" : "/nfs/home/kumarp/Final_100_files_data/Preprocessed_final_data.csv"
 }
 
 DRL_CFG = {
@@ -42,18 +48,18 @@ DRL_CFG = {
     'LR': 1e-3,
     'TARGET_UPD_INT': 500,
     # [DQN, DDQN,DUELLINGDQN]
-    'MODEL_ARCH': 'DDQN',
+    'MODEL_ARCH': 'DUELLINGDQN',
     #['NORMAL','PER']
     'BUFFER_TYPE': 'PER',
     'OUTPUT_NODES': GYM_ENV_CFG['NB_NODES'],
     #[1,3,5,10]
-    'Update_target_every': 5,
+    'Update_target_every': 2,
     # ['under_util', 'over_util' , 'simple']
     'reward_type': 'under_util',
     # [RMSPROP, ADAM]
-    'Optimizer': "RMSPROP",
+    'Optimizer': "ADAM",
     # [HUBER, TDERROR]
-    'Loss': "HUBER",
+    'Loss': "TDERROR",
     "Gradien_Clip_Val": 1.0
 }
 

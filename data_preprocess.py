@@ -103,3 +103,48 @@ def machine_limits(machine):
     machine_mem_type = GYM_ENV_CFG['MM_CAP'][machine]
     machine_mem_cap = GLOBAL_CFG['MM_CAP_VALUES'][machine_mem_type]
     return [machine_cpu_cap, machine_mem_cap]
+
+
+def generate_dataset():
+    data_path = GLOBAL_CFG["Input_path"]
+    df = pd.read_csv(data_path)
+    attr_idx = {'Placed': 0,
+                'Task_requested_time': 1,
+                'cpu_req': 2,
+                'mem_req': 3,
+                'cpu_rate': 4,
+                'can_mem_usg': 5,
+                'Done': 6
+                }
+    state_indeces = [2, 3]
+    total_episodes = GYM_ENV_CFG["Total_Episodes"]
+    max_no_of_task = GLOBAL_CFG["Max_No_of_Task"]
+    copy_flag = GYM_ENV_CFG["Episode_copy"]
+    dict_with_one = {}
+    durations = {}
+    epi = 0
+    for episode in range(total_episodes):
+        max_task_current_epi = np.random.choice(max_no_of_task)
+        subset_df = df.sample(max_task_current_epi)
+        df_dict = subset_df.to_dict('records')
+        dur = []
+        tasks = []
+        for row in df_dict:
+            sample_list = np.zeros(7)
+            cpu_req = row["cpu_req"]
+            mem_req = row["mem_req"]
+            duration = row["diff"]
+            cpu_usage = row["cpu_rate"]
+            mem_usage = row["can_mem_usg"]
+            sample_list[2] = cpu_req
+            sample_list[3] = mem_req
+            sample_list[4] = cpu_usage
+            sample_list[5] = mem_usage
+            tasks.append(list(sample_list))
+            dur.append(duration)
+
+        dict_with_one[epi] = tasks
+        durations[epi] = dur
+        epi += 1
+
+    return dict_with_one, durations, attr_idx, state_indeces

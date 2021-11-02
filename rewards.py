@@ -39,7 +39,6 @@ def get_intermediate_reward(action, usages, updated_capacities):
     # remove
     '''if action in least_used_machines:
         reward = -15'''
-
     if (percentage_mem >= 95.0) and (percentage_cpu >= 95.0):
         reward = -10
 

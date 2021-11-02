@@ -1,5 +1,4 @@
 import torch
-
 from data_preprocess import *
 from config import *
 import torch
@@ -203,6 +202,21 @@ class NaivePrioritizedBuffer(object):
 def update_target(current_model, target_model):
     target_model.load_state_dict(current_model.state_dict())
 
+def soft_update(current_model, target_model):
+    """Soft update model parameters.
+           θ_target = τ*θ_local + (1 - τ)*θ_target
+           Params
+           =======
+               local model (PyTorch model): weights will be copied from
+               target model (PyTorch model): weights will be copied to
+               tau (float): interpolation parameter
+           """
+    tau = 0.001
+    for target_param, local_param in zip(target_model.parameters(),
+                                         current_model.parameters()):
+        target_param.data.copy_(tau * local_param.data + (1 - tau) * target_param.data)
+
+
 def decay_epsilon(epsilon):
     epsilon *= DRL_CFG['epsilon_decay']
     epsilon = max(epsilon, DRL_CFG['epsilon_final'] )
@@ -293,3 +307,4 @@ def save_model(q_model, target_model, path):
     target_name = "target_model.pth"
     torch.save(q_model, path+name)
     torch.save(target_model,path+target_name)
+
