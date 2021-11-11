@@ -13,8 +13,6 @@ import natsort
 np.random.seed(GYM_ENV_CFG['SEED'])
 from rewards import *
 
-# A task aquires 50 % of requests and does not increase at each timestep
-
 class customEnv(gym.Env):
     metadata = {'render.modes': ['human']}
     def __init__(self,
@@ -50,6 +48,7 @@ class customEnv(gym.Env):
         return real_cpu_usg, real_mem_usg
 
     def reset(self):
+        self.orignal_time = 0
         # We will be using this counter for penalty of the episode
         self.overshoot_counter = 0
         # Invokes Rule 1 and Rule2 in Step
@@ -190,11 +189,22 @@ class customEnv(gym.Env):
             [self.task_end_time.pop(key) for key in tasks_with_minimum_time]  # here we pop out the keys with min values
 
             # Here we will give the wait_reward + over_util_penalty
+            #self.reward = calculate_wait_reward(len(tasks_with_minimum_time))
 
-            self.reward = calculate_wait_reward(len(tasks_with_minimum_time))
+            if not self.one_task:
+                usage = list(self.state[self.i, self.nb_dim * 2:(self.nb_dim * 2 + self.nb_w_nodes) + self.nb_w_nodes])
+            else:
+                usage = []
+                cpu_usg = list(self.state[2])
+                mem_usg = list(self.state[3])
+                usage = cpu_usg + mem_usg
+
+            if DRL_CFG['reward_type'] == "under_util":
+                self.reward = under_util_reward(usage)
+            else:
+                    self.reward = calculate_wait_reward(tasks_with_minimum_time)
 
             #self.cum_reward += self.reward
-
             percentage_used_machine = self.calculate_percent_machine()
             info["machine-Used-Percentage"] = percentage_used_machine
 
@@ -262,11 +272,16 @@ class customEnv(gym.Env):
             self.max_end_time = max_end_time
             self.episode_duration = max(self.task_end_time.values())
             self.wait_time = self.episode_duration - self.max_end_time
+            self.orignal_time = self.max_end_time
 
             #self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
              #                                max_end_time = max_end_time)
+            if DRL_CFG["reward_type"] == "under_util":
+                self.reward = under_util_reward(usage)
+            else:
+                self.reward = episode_end_reward(task_end_time=self.task_end_time, clock_time=self.clock_time, \
+                                                        max_end_time = max_end_time)
 
-            self.reward = under_util_reward(usage)
 
             for machine in range(self.nb_w_nodes):
                 cpu_limit, memory_limit = machine_limits(machine)
@@ -350,9 +365,7 @@ class customEnv(gym.Env):
                     self.state[2, machine_no] -= cpu_usage
                     self.state[3, machine_no] -= mem_usage
                     self.update_free_machine_limits()
-#1-1
-    #50
-    #30
+
     def get_valid_action_mask(self):
         x = np.ones(GYM_ENV_CFG['NB_NODES'] + 1) # 8
         cpu_usage, mem_usage= self.train_data[self.episode_no][self.i][4:6]
@@ -363,18 +376,14 @@ class customEnv(gym.Env):
             #mem_capacity     = self.machine_capacity[element][1]
             orignal_cpu_limit, orignal_mem_limit = machine_limits(element)
             changed_cpu_limit, changed_mem_limit = self.machine_capacity[element]
-
             #percentage_cpu = ((cpu_limit - changed_cpu_limit) / cpu_limit) * 100
             #percentage_mem = ((mem_limit - changed_mem_limit) / mem_limit) * 100
 
-            if (changed_cpu_limit < cpu_usage) or (changed_cpu_limit < cpu_usage_next) \
-                    and(changed_mem_limit < mem_usage) or (changed_mem_limit < mem_usage_next):
-
+            if (changed_cpu_limit < cpu_usage) or (changed_mem_limit < mem_usage):
                 x[1+element] = 0
                 x[0] = 1 # we enable waiting here
-
                 # Counter which tells the number of times such state was observed
-                self.overshoot_counter +=1
+                self.overshoot_counter += 1
         return x
 
     def get_metric(self):

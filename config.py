@@ -10,9 +10,9 @@ GYM_ENV_CFG = {
     'NB_RES_DIM': 2,
     'One-Task': True,
     #[100, 200, 400, 500]
-    "Total_Episodes": 200,
+    "Total_Episodes": 100,
     #[True, False]
-    "Episode_copy" : True
+    "Episode_copy" : False
 }
 # MC_CAP_VALUES (Machine CPU Capacity values) is a representation of
 # the total cores available per machine type
@@ -21,19 +21,16 @@ GYM_ENV_CFG = {
 
 GLOBAL_CFG = {
     # [1_000, 10_000, 100_000]
-    'Max_No_of_Task': 1_000,
-    'Max_No_of_Jobs': 10,
-    'TASK_DURS_LOW': [50, 100],
-    'TASK_DURS_MEDIUM': [50, 100, 200, 500],
-    'TASK_DURS_HIGH': [200, 500, 1000],
-    'MC_CAP_VALUES': {'A':1.0, 'B':0.50},
+    'Max_No_of_Task': 2_000,
+    'Max_No_of_Jobs': 100,
+    'MC_CAP_VALUES': {'A': 1.0, 'B': 0.50},
     'MM_CAP_VALUES': {'A': 0.75, 'B': 0.38},
     'SEED': 42,
     'features_to_include': ['cpu_req', 'mem_req'],
-    'K_u': 2,
+    'K_u': 3,
+    'K_o': 100,
     'Scale_factor': 10,
-    'Usage_Ratio': {"Cpu": 0.4,'Mem': 0.5},
-    "Input_path" : "/nfs/home/kumarp/Final_100_files_data/Preprocessed_final_data.csv"
+    "Input_path" : r"C:\Users\Pawan\Downloads\Data_Preperation\Preprocessed_final_data.csv"
 }
 
 DRL_CFG = {
@@ -55,11 +52,11 @@ DRL_CFG = {
     #[1,3,5,10]
     'Update_target_every': 2,
     # ['under_util', 'over_util' , 'simple']
-    'reward_type': 'under_util',
+    'reward_type': 'simple',
     # [RMSPROP, ADAM]
-    'Optimizer': "ADAM",
+    'Optimizer': "RMSPROP",
     # [HUBER, TDERROR]
-    'Loss': "TDERROR",
+    'Loss': "HUBER",
     "Gradien_Clip_Val": 1.0
 }
 

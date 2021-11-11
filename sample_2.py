@@ -1,3 +1,5 @@
+import copy
+
 from config import *
 from data_preprocess import *
 import random
@@ -12,7 +14,7 @@ np.random.seed(GYM_ENV_CFG['SEED'])
 script_dir = os.path.dirname(__file__)
 results_dir = os.path.join(script_dir, 'Results/')
 
-res_dist_dict = {}
+'''res_dist_dict = {}
 for res in ['cpu_req', 'mem_req']:
     res_dist_dict[res] = GYM_ENV_CFG[res]
 df = data_gen(1_000, res_dist_dict, ratio=0.1)
@@ -24,8 +26,9 @@ for i in range(GLOBAL_CFG['Max_No_of_Jobs']):
     subset_dataset[i] = np.asarray(random.sample(train_data,\
                                                  random.randint(1, GLOBAL_CFG['Max_No_of_Task'])))
     subset_task_duration[i] = generate_duration(subset_dataset, key=i,\
-                                                length_duration=GLOBAL_CFG['TASK_DURS_MEDIUM'])
+                                                length_duration=GLOBAL_CFG['TASK_DURS_MEDIUM'])'''
 
+subset_dataset, subset_task_duration, attr_idx, state_indices = generate_dataset()
 env = gym.make('custom-v0',
                train_data=subset_dataset,
                task_duration=subset_task_duration,
@@ -66,19 +69,19 @@ for episode in range(GLOBAL_CFG['Max_No_of_Jobs']):
             #action = np.random.choice(GYM_ENV_CFG['NB_NODES']+1) ## model.predict()
             action_mask = env.get_valid_action_mask()
             action = env.get_valid_action_mask()
-            action = random.sample(list(enumerate(action)) ,1)[0][0]
+            action = random.sample(list(enumerate(action)), 1)[0][0]
             print("Episode_Number:", env.episode_no)
             print("StepNumber:", env.i)
             next_state, reward, done, info = env.step(action)
             print("Information:", info)
             print("reward:", reward)
             replay_mem.append({"state":state, "next_state":next_state})
-            state = next_state
+            state = copy.copy(next_state)
 
-            env.gen_plot(path_to_dir=path)
+            #env.gen_plot(path_to_dir=path)
             if done:
                 print("episodeReward", reward)
                 print('\n', "***********")
                # print(np.shape(state))
-                env.make_gif(path=path)
+               # env.make_gif(path=path)
                 time.sleep(5)

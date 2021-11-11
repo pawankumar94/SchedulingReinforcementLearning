@@ -17,15 +17,17 @@ def wait_penalty(train_data, current_time, episode_no):
 
 def calculate_wait_reward(no_of_task_ends):
     # if more number of tasks ends then value decreases
-    wait_reward =  - (1 / no_of_task_ends)
+    no_of_task_ends = len(no_of_task_ends)
+    if DRL_CFG["reward_type"] == 'simple':
+        wait_reward = 0.5 * no_of_task_ends
+    else:
+        wait_reward = - (1 / no_of_task_ends)
     return wait_reward
 
 
-def over_util_reward(overutil_counter):
-
-    k_constant = 2
+def over_shoot_penalty(overutil_counter):
+    k_constant = GLOBAL_CFG['K_o']
     overutil_penalty = -(k_constant * overutil_counter)
-
     return overutil_penalty
 
 def get_intermediate_reward(action, usages, updated_capacities):
@@ -40,13 +42,13 @@ def get_intermediate_reward(action, usages, updated_capacities):
     '''if action in least_used_machines:
         reward = -15'''
     if (percentage_mem >= 95.0) and (percentage_cpu >= 95.0):
-        reward = -10
+        reward = -20
 
     elif (percentage_cpu >= 30.0 and  percentage_cpu <95.0) \
             and (percentage_mem >= 30.0 and  percentage_mem < 95.0) :
-        reward = 10
+        reward = 20
     else:
-        reward = -15
+        reward = 10
 
     return reward
 
